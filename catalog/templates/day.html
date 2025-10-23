@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="h4 mb-3">{{ date|date:"l, F j, Y" }}</h2>
+
+<table class="table table-bordered align-middle text-center">
+  <thead class="table-light">
+    <tr>
+      <th style="width:10rem;">Time</th>
+      {% for r in rooms %}
+        <th>{{ r.name }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+      <tr>
+        <th scope="row">{{ row.hour|add:0 }}:00 – {{ row.hour|add:2 }}:00</th>
+        {% for c in row.cells %}
+          <td>
+            {% if c.booked %}
+              <span class="badge text-bg-secondary">Booked</span><br>
+              <small>{{ c.event.name }}</small>
+            {% else %}
+              <a class="btn btn-sm btn-primary mt-1"
+                 href="{{ c.book_url }}">Book</a>
+            {% endif %}
+          </td>
+        {% endfor %}
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<a href="/" class="btn btn-outline-secondary">Back to Calendar</a>
+{% endblock %}

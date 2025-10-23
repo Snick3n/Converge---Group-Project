@@ -2,6 +2,13 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 import uuid #for unique room and event instances
+from django.utils import timezone
+from django.core.exceptions import ValidationError
+from datetime import time, timedelta
+
+VALID_HOURS = (10, 12, 14, 16, 18, 20)
+SLOT_DURATION = 2
+LAST_END_HOUR = 22
 
 class Genre(models.Model):
     name = models.CharField(max_length=100, help_text='Enter type of event (e.g. Speech, Birthday, Club Meeting)')
@@ -31,10 +38,23 @@ class Event(models.Model):
     room = models.ForeignKey('Room', on_delete=models.RESTRICT)
     class Meta:
         ordering = ['date', 'time']
+        constraints = [
+            models.UniqueConstraint(fields=['room', 'date', 'time'], name='uniq_room_date_times')
+        ]
+    def end_time(self) -> time:
+        return (timezone.datetime.combine(self.date, self.time) + timedelta(hours=SLOT_DURATION)).time()
+    def clean(self):
+        if self.time.minute != 0 or self.time.second != 0 or self.time.microsecond != 0:
+            raise ValidationError('Events must start exactly on the hour.')
+        if self.time.hour not in VALID_HOURS:
+            raise ValidationError('Start time must be one of these: 10, 12, 14, 16, 18, or 20.')
+        if self.time.hour + SLOT_DURATION > LAST_END_HOUR:
+            raise ValidationError('Event would end after 10 PM.')
+
     def get_absolute_url(self):
         return reverse('event detail', args=[str(self.id,)])
     def __str__(self):
-        return self.name
+        return f"{self.name} @ {self.room} on {self.date} {self.time.strftime("%H:%M")}"
 
 class EventPlanner(models.Model):
     name = models.CharField(max_length=255)
