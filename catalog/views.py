@@ -6,6 +6,7 @@ from django.utils import timezone
 from .models import Event, Room, VALID_HOURS
 from django.views import View
 from django.db.models import Count
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 SLOTS_PER_DAY = 6
 
