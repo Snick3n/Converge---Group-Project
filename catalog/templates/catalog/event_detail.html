@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Title: {{ event.name }}</h1>
+<h1>Event: {{ event.name }}</h1>
     <p><strong>Event Planner:</strong>
         <a href="{% url 'catalog:eventplanner_detail' event.planner.pk %}">{{ event.planner }}</a>
 

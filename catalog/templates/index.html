@@ -6,7 +6,7 @@
     <ul class="list-group mb-4">
       {% for e in current_events %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href="index.html">{{ e.name }}</a>
+          <a href=" {% url 'catalog:event_detail' e.pk%}">{{ e.name }}</a>
             <!--this should be <a href="(( e.get_absolute_url ))">(( e.name ))</a>
                 Just replace the parenthesis with Curly Braces-->
           <small class="text-muted">{{ e.date|date:"M j" }} {{ e.time|time:"g:i A" }}</small>
@@ -19,7 +19,7 @@
     <h2 class="h5">Upcoming Events</h2>
     <div class="d-grid gap-2">
       {% for e in upcoming_events %}
-        <a class="btn btn-info" href="index.html">{{ e.name }}</a>
+        <a class="btn btn-info" href="{% url 'catalog:event_detail' e.pk %}">{{ e.name }}</a>
           <!-- this should be <a class="btn btn-info" href=" ((e.get_absolute_url)) ">(( e.name ))</a>
            Just replace the parenthesis with Curly Braces-->
       {% empty %}
