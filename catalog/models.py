@@ -5,6 +5,7 @@ import uuid #for unique room and event instances
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from datetime import time, timedelta
+from django.db.models import Q
 
 VALID_HOURS = (10, 12, 14, 16, 18, 20)
 SLOT_DURATION = 2
@@ -23,6 +24,8 @@ class Room(models.Model):
     status = models.CharField(max_length=1, choices=available_status, default='a', help_text='Room availability')
     class Meta:
         ordering = ['name', 'capacity', 'status']
+    def is_available(self, date, time):
+        return not Event.objects.filter(date=date, time=time, room=self).exists()
     def __str__(self):
         return self.name
 
@@ -44,6 +47,8 @@ class Event(models.Model):
     def end_time(self) -> time:
         return (timezone.datetime.combine(self.date, self.time) + timedelta(hours=SLOT_DURATION)).time()
     def clean(self):
+        if not self.time:
+            return
         if self.time.minute != 0 or self.time.second != 0 or self.time.microsecond != 0:
             raise ValidationError('Events must start exactly on the hour.')
         if self.time.hour not in VALID_HOURS:

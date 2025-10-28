@@ -5,5 +5,6 @@ app_name = 'catalog'
 urlpatterns = [
     path('', views.index, name='index'),
     path('day/<int:year>/<int:month>/<int:day>/', views.DayView.as_view(), name='calendar-day'),
+    path('book/',views.book_event,name='book'),
 
 ]

@@ -3,10 +3,17 @@ import calendar
 from datetime import date, datetime, timedelta
 from django.urls import reverse
 from django.utils import timezone
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from .forms import EventBookingForm
 from .models import Event, Room, VALID_HOURS
 from django.views import View
 from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import user_passes_test
+from django.utils.decorators import method_decorator
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.timezone import make_aware
+from django.contrib import messages
 
 SLOTS_PER_DAY = 6
 
@@ -114,17 +121,85 @@ class DayView(View):
             cells = []
             for r in rooms:
                 e = by_key.get((r.id, h))
+
+                book_url = (
+                    f"{reverse('catalog:book')}"
+                    f"?room={r.id}"
+                    f"&date={d:%Y-%m-%d}"
+                    f"&time={h:02d}:00"
+                )
+
                 cells.append({
-                    'room': r,
-                    'event': e,
-                    'booked': e is not None,
-                    'book_url': f"{reverse('catalog:index')}?room={r.id}&date={d:%Y-%m-%d}&time={h:02d}:00",
+                    "room_name": r.name,
+                    "room_id": str(r.id),
+                    "event": e,
+                    "booked": e is not None,
+                    "book_url": book_url,
                 })
 
-            rows.append({'hour': h, 'cells': cells})
+            rows.append({
+                "hour": h,
+                "cells": cells,
+            })
 
         return render(
             request,
-            'day.html',
-            {'date': d, 'rooms': rooms, 'rows': rows}
+            "day.html",
+            {
+                "date": d,
+                "rooms": rooms,
+                "rows": rows,
+            }
         )
+
+def find_best_room(date, time, expected_attendees):
+    booked_room_ids = Event.objects.filter(date=date, time=time).values_list('room_id', flat=True)
+    available_rooms = Room.objects.filter(status='a').exclude(id__in=booked_room_ids)
+    suitable_rooms = available_rooms.filter(capacity__gte=expected_attendees).order_by('capacity')
+    return suitable_rooms.first()
+@user_passes_test(lambda u: u.is_superuser)
+def book_event(request):
+    room_id = request.GET.get("room")
+    date_str = request.GET.get("date")
+    time_str = request.GET.get("time")
+
+    if not room_id:
+        return HttpResponseBadRequest("Missing room ID.")
+
+    room = get_object_or_404(Room, id=room_id)
+    event_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    start_time = datetime.strptime(time_str, "%H:%M").time()
+
+    if request.method == "POST":
+        form = EventBookingForm(request.POST)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.date = event_date
+            event.time = start_time
+
+            expected_attendees = form.cleaned_data["expected_attendees"]
+
+            if room.is_available(event_date, start_time) and room.capacity >= expected_attendees:
+                event.room = room
+            else:
+                best_room = find_best_room(event_date, start_time, expected_attendees)
+                if best_room:
+                    event.room = best_room
+                    messages.info(request, f"{room.name} was full — assigned {best_room.name} instead.")
+                else:
+                    messages.error(request, "No available rooms fit that group size at this time.")
+                    return redirect("catalog:calendar-day", year=event_date.year, month=event_date.month, day=event_date.day)
+
+            event.max_attendees = expected_attendees
+            event.save()
+
+            messages.success(request, f"Event booked in {event.room.name}!")
+            return redirect("catalog:calendar-day", year=event_date.year, month=event_date.month, day=event_date.day)
+    else:
+        form = EventBookingForm()
+
+    return render(
+        request,
+        "book_event.html",
+        {"form": form, "room": room, "date": event_date, "time": start_time},
+    )
