@@ -5,8 +5,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
 from .forms import EventBookingForm
-from .models import Event, Room, VALID_HOURS
-from django.views import View
+from .models import Event, EventPlanner, Room, VALID_HOURS
+from django.views import View, generic
 from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import user_passes_test
@@ -203,3 +203,12 @@ def book_event(request):
         "book_event.html",
         {"form": form, "room": room, "date": event_date, "time": start_time},
     )
+
+class EventPlannerListView( generic.ListView):
+    model = EventPlanner
+class EventPlannerDetailView( generic.DetailView):
+    model = EventPlanner
+class EventListView( generic.ListView):
+    model = Event
+class EventDetailView( generic.DetailView):
+    model = Event

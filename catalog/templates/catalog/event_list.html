@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Event List</h1>
+
+    {% if event_list %}
+        <ul>
+            {% for event in event_list %}
+                <li>
+                    <a href="{% url 'catalog:event_detail' event.pk %}">{{ event.name }}</a>
+                    (Planner: {{ event.planner}})
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>There are no Events Scheduled.</p>
+    {% endif %}
+    <a href="{% url 'catalog:index' %}" class="btn btn-outline-secondary">Back</a>
+{% endblock %}

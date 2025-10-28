@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Planner: {{ eventplanner.name }}</h1>
+    <div>
+        {% if eventplanner.image %}
+            <img src="{{ eventplanner.eventplanner_image.url }}">
+        {% endif %}
+        {% if eventplanner.detail %}
+            <h4>Description</h4>
+            <p>{{ eventplanner.detail }}</p>
+        {% endif %}
+    </div>
+    <h2>Events</h2>
+    {% if eventplanner.event_set.all %}
+        <ul>
+            {% for event in eventplanner.event_set.all %}
+                <li><a href="{% url 'catalog:event_detail' event.pk %}">{{ event.name }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>This planner has no events.</p>
+    {% endif %}
+    <a href="{% url 'catalog:eventplanner_list' %}" class="btn btn-outline-secondary">Back</a>
+{% endblock %}
