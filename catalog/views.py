@@ -1,4 +1,4 @@
-from django.shortcuts import render,
+from django.shortcuts import render
 import calendar
 from datetime import date, datetime, timedelta
 from django.urls import reverse
@@ -11,7 +11,7 @@ from django.db.models import Count
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import user_passes_test
 from django.utils.decorators import method_decorator
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, redirect
 from django.utils.timezone import make_aware
 from django.contrib import messages
 from .forms import SignUpForm

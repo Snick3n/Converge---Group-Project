@@ -1,7 +1,7 @@
 /*************************************
 HEADING
 **************************************/
-l1  {
+h1  {
  font-family: 'Times New Roman', sans-serif;
  margin: 10px 0;
  font-size: 1.75em;
@@ -32,22 +32,18 @@ a:hover {
 }
 
 body {
-    background-color: white;
-    color: #000000;
-
-}
-
-html, body {
-    height: 100%;
     margin: 0;
-    padding: 0;
-}
-
-body {
-    background-size: cover;
-    background: url("static/css/page_02.png"): no-repeat fixed center;
     min-height: 100vh;
+    color: #000;
+    background-color: #fff;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-size: cover;
+    background-image: url("static/css/img/page_02.png");
+
 }
 
 body.signup-page {
     background-image: url("static/img/page_01.png");
+}
