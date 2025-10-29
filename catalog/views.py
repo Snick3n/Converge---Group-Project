@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,
 import calendar
 from datetime import date, datetime, timedelta
 from django.urls import reverse
@@ -14,6 +14,8 @@ from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.timezone import make_aware
 from django.contrib import messages
+from .forms import SignUpForm
+from django.contrib.auth import login
 
 SLOTS_PER_DAY = 6
 
@@ -203,6 +205,19 @@ def book_event(request):
         "book_event.html",
         {"form": form, "room": room, "date": event_date, "time": start_time},
     )
+
+def signup_view(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.first_name = form.cleaned_data.get('displayname', '')
+            user.save()
+            login(request, user)
+            return redirect('catalog:index')
+    else:
+        form = SignUpForm()
+    return render(request, 'registration/sign_up.html', {'form': form})
 
 class EventPlannerListView( generic.ListView):
     model = EventPlanner

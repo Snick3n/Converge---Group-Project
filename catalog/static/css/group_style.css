@@ -1,0 +1,53 @@
+/*************************************
+HEADING
+**************************************/
+l1  {
+ font-family: 'Times New Roman', sans-serif;
+ margin: 10px 0;
+ font-size: 1.75em;
+ font-weight: normal;
+ line-height: 0.5;
+ text-align: left;
+ color:    #0000FF;
+ }
+
+h2 {
+     font-family: 'Changa One', sans-serif;
+ margin: 10px 0;
+ font-size: 1em;
+ font-weight: normal;
+ line-height: 0.5;
+ text-align: left;
+ color:    rebeccapurple;
+}
+
+
+a {
+  color: cornflowerblue; /* Default link color */
+  text-decoration: none; /* Optional: remove default underline */
+}
+
+a:hover {
+  color: red;
+}
+
+body {
+    background-color: white;
+    color: #000000;
+
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-size: cover;
+    background: url("static/css/page_02.png"): no-repeat fixed center;
+    min-height: 100vh;
+}
+
+body.signup-page {
+    background-image: url("static/img/page_01.png");

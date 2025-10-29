@@ -1,5 +1,8 @@
 from django import forms
 from .models import Event
+from django import forms
+from django.contrib.auth.models import User
+from django.contrib.auth.forms import UserCreationForm
 
 class EventBookingForm(forms.ModelForm):
     expected_attendees = forms.IntegerField(min_value=1, max_value=100, required=True)
@@ -13,3 +16,13 @@ class EventBookingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if available_rooms is not None:
             self.fields["room"].queryset = available_rooms
+
+
+
+class SignUpForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    displayname = forms.CharField(max_length=100, required=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'displayname', 'email', 'password1', 'password2']
