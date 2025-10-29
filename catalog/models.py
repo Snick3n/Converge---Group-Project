@@ -6,6 +6,8 @@ from django.utils import timezone
 from django.core.exceptions import ValidationError
 from datetime import time, timedelta
 from django.db.models import Q
+from django.contrib.auth.models import User
+
 
 VALID_HOURS = (10, 12, 14, 16, 18, 20)
 SLOT_DURATION = 2

@@ -14,7 +14,6 @@ from django.utils.decorators import method_decorator
 from django.shortcuts import get_object_or_404, redirect
 from django.utils.timezone import make_aware
 from django.contrib import messages
-from .forms import SignUpForm
 from django.contrib.auth import login
 
 SLOTS_PER_DAY = 6
@@ -99,7 +98,7 @@ def index(request):
         .order_by('date', 'time')[:4]
     )
 
-    return render(request, "index.html", {
+    return render(request, "catalog/index.html", {
         "current_month": current_month,
         "next_month": next_month,
         "current_events": current_events,
@@ -206,18 +205,7 @@ def book_event(request):
         {"form": form, "room": room, "date": event_date, "time": start_time},
     )
 
-def signup_view(request):
-    if request.method == 'POST':
-        form = SignUpForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.first_name = form.cleaned_data.get('displayname', '')
-            user.save()
-            login(request, user)
-            return redirect('catalog:index')
-    else:
-        form = SignUpForm()
-    return render(request, 'registration/sign_up.html', {'form': form})
+
 
 class EventPlannerListView( generic.ListView):
     model = EventPlanner

@@ -16,13 +16,3 @@ class EventBookingForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if available_rooms is not None:
             self.fields["room"].queryset = available_rooms
-
-
-
-class SignUpForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    displayname = forms.CharField(max_length=100, required=True)
-
-    class Meta:
-        model = User
-        fields = ['username', 'displayname', 'email', 'password1', 'password2']
