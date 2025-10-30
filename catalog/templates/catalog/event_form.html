@@ -1,0 +1,17 @@
+{% extends "catalog/base.html" %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
+
+{% block content %}
+    {% if perms.catalog.create_event %}
+        <form action="" method="POST">
+              {% csrf_token %}
+                {{ form|crispy }}
+              <input type="submit" value="Submit"/>
+        </form>
+    {% else %}
+        You do not have permissions to create events.
+        Contact an Administrator if this is an error.
+        <a href="{% url 'catalog:index' %}">Home</a>
+    {% endif %}
+{% endblock %}
