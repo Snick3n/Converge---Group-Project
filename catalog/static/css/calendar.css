@@ -1,0 +1,42 @@
+/* calendar.css – white → yellow → orange → red heatmap */
+
+/* make month tables easy to target */
+.calendar-month td { transition: background-color .15s ease; }
+
+/* exactly the buckets your Python sets via d.cls (load-0..3) */
+.calendar-month td.load-0 { background-color: var(--bs-white); }            /* no events */
+.calendar-month td.load-1 { background-color: var(--bs-warning-bg-subtle, #fff3cd); } /* yellow */
+.calendar-month td.load-2 { background-color: var(--bs-orange, #fd7e14); color: var(--bs-white); } /* orange */
+.calendar-month td.load-3 { background-color: var(--bs-red, #dc3545); color: var(--bs-white); }    /* red */
+
+/* out-of-month days dimmed */
+.calendar-month td.is-outside { opacity: .55; }
+
+/* nicer hover (keeps palette readable) */
+.calendar-month td a { color: inherit; text-decoration: none; display:block; padding:.5rem .25rem; }
+.calendar-month td:hover { box-shadow: inset 0 0 0 1px rgba(0,0,0,.05); }
+
+/* legend boxes */
+.legend-swatch {
+  display:inline-block; width:14px; height:14px; border-radius:3px;
+  border:1px solid var(--bs-gray-300); vertical-align:-2px; margin-right:.25rem;
+}
+.legend-swatch.load-0 { background: var(--bs-white); }
+.legend-swatch.load-1 { background: var(--bs-warning-bg-subtle, #fff3cd); }
+.legend-swatch.load-2 { background: var(--bs-orange, #fd7e14); }
+.legend-swatch.load-3 { background: var(--bs-red, #dc3545); }
+
+.navbar-brand .logo {
+    height: 40px;
+    width: auto;
+    object-fit: contain;
+}
+
+body {
+  background: linear-gradient(135deg, #0b1d3a 0%, #eaf3fa 100%);
+  color: #222;
+  min-height: 100vh;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+}

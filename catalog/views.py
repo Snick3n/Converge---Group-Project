@@ -145,7 +145,7 @@ class DayView(View):
 
         return render(
             request,
-            "day.html",
+            "catalog/day.html",
             {
                 "date": d,
                 "rooms": rooms,
@@ -201,7 +201,7 @@ def book_event(request):
 
     return render(
         request,
-        "book_event.html",
+        "catalog/book_event.html",
         {"form": form, "room": room, "date": event_date, "time": start_time},
     )
 
