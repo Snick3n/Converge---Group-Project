@@ -1,12 +1,14 @@
 {% extends "catalog/base.html" %}
 {% block content %}
-    <div class="row g-4"></div>
+
+<div class="row g-4">
+  <!-- LEFT COLUMN -->
   <section class="col-12 col-lg-4">
     <h2 class="h5">Current Events</h2>
     <ul class="list-group mb-4">
       {% for e in current_events %}
         <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href=" {% url 'catalog:event_detail' e.pk%}">{{ e.name }}</a>
+          <a href="{% url 'catalog:event_detail' e.pk %}">{{ e.name }}</a>
           <small class="text-muted">{{ e.date|date:"M j" }} {{ e.time|time:"g:i A" }}</small>
         </li>
       {% empty %}
@@ -17,68 +19,37 @@
     <h2 class="h5">Upcoming Events</h2>
     <ul class="list-group mb-4">
       {% for e in upcoming_events %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-          <a href=" {% url 'catalog:event_detail' e.pk%}">{{ e.name }}</a>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <a href="{% url 'catalog:event_detail' e.pk %}">{{ e.name }}</a>
           <small class="text-muted">{{ e.date|date:"M j" }}</small>
-          </li>
+        </li>
       {% empty %}
-        <span class="text-muted">No events are planned yet.</span>
+        <li class="list-group-item text-muted">No events are planned yet.</li>
       {% endfor %}
     </ul>
   </section>
+
+  <!-- CURRENT MONTH -->
   <section class="col-12 col-lg-4">
     <div class="small text-uppercase text-muted mb-1">New Events this Month</div>
     <h3 class="h6">{{ current_month.name }} {{ current_month.year }}</h3>
-  <table class="table table-bordered text-center align-middle" role="grid"
-       aria-label="{{ current_month.name }} {{ current_month.year }} calendar">
-  <thead class="table-light">
-  <tr>
-      <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
-  </tr>
-  </thead>
-  <tbody>
-  {% for week in current_month.weeks %}
-      <tr>
-      {% for d in week %}
-          <td class="{{ d.cls }} {% if not d.in_month %}text-muted{% endif %}">
-          <a class="d-block text-decoration-none py-2" href="{{ d.url }}">
-          <div class="fw-semibold">{{ d.date.day }}</div>
-          <small class="text-muted">
-          {% if d.count %}{{ d.count }} event{% if d.count != 1 %}s{% endif %}{% else %}&mdash;{% endif %}
-          </small>
-          </a>
-          </td>
-      {% endfor %}
-      </tr>
-    {% endfor %}
-  </tbody>
-  </table>
-  </section>
 
-  <section class="col-12 col-lg-4">
-    <div class="small text-uppercase text-muted mb-1">Next Month's Events</div>
-    <h3 class="h6">{{ next_month.name }} {{ next_month.year }}</h3>
-
-    <table class="table table-bordered text-center align-middle" role="grid"
-           aria-label="{{ next_month.name }} {{ next_month.year }} calendar">
+    <table class="table table-bordered text-center align-middle calendar-table calendar-month" role="grid"
+           aria-label="{{ current_month.name }} {{ current_month.year }} calendar">
       <thead class="table-light">
         <tr>
           <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
         </tr>
       </thead>
       <tbody>
-        {% for week in next_month.weeks %}
+        {% for week in current_month.weeks %}
           <tr>
             {% for d in week %}
-              <td class="{{ d.cls }} {% if not d.in_month %}text-muted{% endif %}">
-                <a class="d-block text-decoration-none py-2" href="{{ d.url }}">
+              <td class="position-relative {{ d.cls }} {% if not d.in_month %}is-outside{% endif %}">
+                <a class="d-block text-decoration-none py-2 stretched-link" href="{{ d.url }}">
                   <div class="fw-semibold">{{ d.date.day }}</div>
                   <small class="text-muted">
-                    {% if d.count %}
-                      {{ d.count }} event{% if d.count != 1 %}s{% endif %}
-                    {% else %}
-                      &mdash;
-                    {% endif %}
+                    {% if d.count %}{{ d.count }} event{% if d.count != 1 %}s{% endif %}{% else %}&mdash;{% endif %}
                   </small>
                 </a>
               </td>
@@ -89,14 +60,44 @@
     </table>
   </section>
 
+  <!-- NEXT MONTH -->
+  <section class="col-12 col-lg-4">
+    <div class="small text-uppercase text-muted mb-1">Next Month's Events</div>
+    <h3 class="h6">{{ next_month.name }} {{ next_month.year }}</h3>
+
+    <table class="table table-bordered text-center align-middle calendar-table calendar-month" role="grid"
+           aria-label="{{ next_month.name }} {{ next_month.year }} calendar">
+      <thead class="table-light">
+        <tr>
+          <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for week in next_month.weeks %}
+          <tr>
+            {% for d in week %}
+              <td class="position-relative {{ d.cls }} {% if not d.in_month %}is-outside{% endif %}">
+                <a class="d-block text-decoration-none py-2 stretched-link" href="{{ d.url }}">
+                  <div class="fw-semibold">{{ d.date.day }}</div>
+                  <small class="text-muted">
+                    {% if d.count %}{{ d.count }} event{% if d.count != 1 %}s{% endif %}{% else %}&mdash;{% endif %}
+                  </small>
+                </a>
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
 </div>
 
 <hr class="my-4">
 
 <ul class="list-inline small mt-3">
-  <li class="list-inline-item"><span class="legend-swatch load-0"></span> 0%</li>
-  <li class="list-inline-item"><span class="legend-swatch load-1"></span> ≤33%</li>
-  <li class="list-inline-item"><span class="legend-swatch load-2"></span> ≤66%</li>
-  <li class="list-inline-item"><span class="legend-swatch load-3"></span> >66%</li>
+  <li class="list-inline-item"><span class="legend-swatch load-0"></span> 0</li>
+  <li class="list-inline-item"><span class="legend-swatch load-1"></span> 1–2</li>
+  <li class="list-inline-item"><span class="legend-swatch load-2"></span> 3–4</li>
+  <li class="list-inline-item"><span class="legend-swatch load-3"></span> 5+</li>
 </ul>
 {% endblock %}
