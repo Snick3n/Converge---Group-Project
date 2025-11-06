@@ -1,20 +1,19 @@
 from django.shortcuts import render
 import calendar
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from django.urls import reverse
 from django.utils import timezone
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
-from .forms import EventBookingForm
+from django.http import HttpResponseBadRequest
+from .forms import EventBookingForm, EventPlannerForm
 from .models import Event, EventPlanner, Room, VALID_HOURS
 from django.views import View, generic
 from django.db.models import Count
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.decorators import user_passes_test
-from django.utils.decorators import method_decorator
+from django.contrib.auth.decorators import user_passes_test, login_required
 from django.shortcuts import get_object_or_404, redirect
-from django.utils.timezone import make_aware
 from django.contrib import messages
-from django.contrib.auth import login
+from django.views.generic.edit import UpdateView
+from django.contrib.auth.models import Group
+
 
 SLOTS_PER_DAY = 6
 
@@ -34,7 +33,9 @@ def _month_grid(year: int, month: int, capacity_aware: bool = True):
 
     counts_qs = (
         Event.objects
-        .filter(date__range=(visible_days_start, visible_days_end))
+        .filter(
+            approved=True,
+            date__range=(visible_days_start, visible_days_end))
         .values('date')
         .annotate(count=Count('id'))
     )
@@ -78,8 +79,15 @@ def _month_grid(year: int, month: int, capacity_aware: bool = True):
         "rooms_total": rooms_total,
         "slots_total": slots_total,
     }
+def _cleanup_old_events():
+    today = timezone.localtime().date()
+    first_of_this_month = date(today.year, today.month, 1)
+    Event.objects.filter(date__lt=first_of_this_month).delete()
 
 def index(request):
+
+    _cleanup_old_events()
+
     now = timezone.localtime()
     cy, cm = now.year, now.month
     ny, nm = (cy + 1, 1) if cm == 12 else (cy, cm + 1)
@@ -89,12 +97,14 @@ def index(request):
 
     current_events = (
         Event.objects
-        .filter(date__range=(date(cy, cm, 1), date(cy, cm, calendar.monthrange(cy, cm)[1])))
+        .filter(approved=True,
+                date__range=(date(cy, cm, 1), date(cy, cm, calendar.monthrange(cy, cm)[1])))
         .order_by('date', 'time')[:4]
     )
     upcoming_events = (
         Event.objects
-        .filter(date__gt=date(cy, cm, calendar.monthrange(cy, cm)[1]))
+        .filter(approved=True,
+            date__gt=date(cy, cm, calendar.monthrange(cy, cm)[1]))
         .order_by('date', 'time')[:4]
     )
 
@@ -114,14 +124,16 @@ class DayView(View):
             .filter(date=d)
             .select_related('room', 'planner')
         )
-
-        by_key = {(e.room.id, e.time.hour): e for e in events}
+        by_key = {}
+        for e in events:
+            key = (e.room.id, e.time.hour)
+            by_key.setdefault(key, []).append(e)
 
         rows = []
         for h in VALID_HOURS:
             cells = []
             for r in rooms:
-                e = by_key.get((r.id, h))
+                evs = by_key.get((r.id, h), [])
 
                 book_url = (
                     f"{reverse('catalog:book')}"
@@ -129,12 +141,14 @@ class DayView(View):
                     f"&date={d:%Y-%m-%d}"
                     f"&time={h:02d}:00"
                 )
+                has_approved = any(ev.approved for ev in evs)
 
                 cells.append({
                     "room_name": r.name,
                     "room_id": str(r.id),
-                    "event": e,
-                    "booked": e is not None,
+                    "events": evs,
+                    "booked": bool(evs),
+                    "has_approved": has_approved,
                     "book_url": book_url,
                 })
 
@@ -143,6 +157,13 @@ class DayView(View):
                 "cells": cells,
             })
 
+        can_book = (
+            request.user.is_authenticated and (
+                request.user.is_superuser
+                or request.user.groups.filter(name="EventPlanner").exists()
+            )
+        )
+
         return render(
             request,
             "catalog/day.html",
@@ -150,22 +171,40 @@ class DayView(View):
                 "date": d,
                 "rooms": rooms,
                 "rows": rows,
+                "can_book": can_book,
             }
         )
 
 def find_best_room(date, time, expected_attendees):
-    booked_room_ids = Event.objects.filter(date=date, time=time).values_list('room_id', flat=True)
+    booked_room_ids = Event.objects.filter(
+        date=date,
+        time=time,
+        approved=True,
+    ).values_list('room_id', flat=True)
+
     available_rooms = Room.objects.filter(status='a').exclude(id__in=booked_room_ids)
     suitable_rooms = available_rooms.filter(capacity__gte=expected_attendees).order_by('capacity')
     return suitable_rooms.first()
-@user_passes_test(lambda u: u.is_superuser)
+
+def can_book_user(user):
+    return (
+        user.is_authenticated
+        and (
+        user.is_superuser or
+        user.groups.filter(name="EventPlanner").exists()
+        )
+    )
+
+
+@login_required
+@user_passes_test(can_book_user)
 def book_event(request):
     room_id = request.GET.get("room")
     date_str = request.GET.get("date")
     time_str = request.GET.get("time")
 
-    if not room_id:
-        return HttpResponseBadRequest("Missing room ID.")
+    if not room_id or not date_str or not time_str:
+        return HttpResponseBadRequest("Missing room, date, or time.")
 
     room = get_object_or_404(Room, id=room_id)
     event_date = datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -174,37 +213,65 @@ def book_event(request):
     if request.method == "POST":
         form = EventBookingForm(request.POST)
         if form.is_valid():
-            event = form.save(commit=False)
-            event.date = event_date
-            event.time = start_time
-
+            name = form.cleaned_data["name"]
+            detail = form.cleaned_data["detail"]
             expected_attendees = form.cleaned_data["expected_attendees"]
+            selected_genres = form.cleaned_data.get("genre")
 
             if room.is_available(event_date, start_time) and room.capacity >= expected_attendees:
-                event.room = room
+                chosen_room = room
             else:
-                best_room = find_best_room(event_date, start_time, expected_attendees)
-                if best_room:
-                    event.room = best_room
-                    messages.info(request, f"{room.name} was full — assigned {best_room.name} instead.")
+                chosen_room = find_best_room(event_date, start_time, expected_attendees)
+                if chosen_room:
+                    messages.info(request, f"{room.name} was full — assigned {chosen_room.name} instead.")
                 else:
                     messages.error(request, "No available rooms fit that group size at this time.")
-                    return redirect("catalog:calendar-day", year=event_date.year, month=event_date.month, day=event_date.day)
+                    return redirect(
+                        "catalog:calendar-day",
+                        year=event_date.year,
+                        month=event_date.month,
+                        day=event_date.day,
+                    )
 
-            event.max_attendees = expected_attendees
+            event = Event(
+                name=name,
+                max_attendees=expected_attendees,
+                date=event_date,
+                time=start_time,
+                detail=detail,
+                room=chosen_room,
+                approved=False,
+            )
+
+            try:
+                event.planner = request.user.eventplanner
+            except EventPlanner.DoesNotExist:
+                pass
+
             event.save()
+            if selected_genres:
+                event.genre.set(selected_genres)
 
             messages.success(request, f"Event booked in {event.room.name}!")
-            return redirect("catalog:calendar-day", year=event_date.year, month=event_date.month, day=event_date.day)
+            return redirect(
+                "catalog:calendar-day",
+                year=event_date.year,
+                month=event_date.month,
+                day=event_date.day,
+            )
     else:
         form = EventBookingForm()
 
     return render(
         request,
         "catalog/book_event.html",
-        {"form": form, "room": room, "date": event_date, "time": start_time},
+        {
+            "form": form,
+            "room": room,
+            "date": event_date,
+            "time": start_time,
+        },
     )
-
 
 
 class EventPlannerListView( generic.ListView):
@@ -215,3 +282,91 @@ class EventListView( generic.ListView):
     model = Event
 class EventDetailView( generic.DetailView):
     model = Event
+class EventUpdate(UpdateView):
+    model = Event
+    fields = [
+        'name',
+        'max_attendees',
+        'planner',
+        'genre',
+        'detail',
+        'approved',
+    ]
+    template_name = 'catalog/event_form.html'
+
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        if not self.request.user.is_superuser:
+            form.fields.pop('approved',  None)
+            form.fields.pop('planner', None)
+        return form
+    def form_valid(self, form):
+        if not self.request.user.is_superuser:
+            original = self.get_object()
+            form.instance.approved = original.approved
+            form.instance.planner = original.planner
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        event_date = self.object.date
+        return reverse(
+            "catalog:calendar-day",
+            kwargs={
+                "year": event_date.year,
+                "month": event_date.month,
+                "day": event_date.day,
+            },
+        )
+
+def event_delete(request, pk):
+    event = get_object_or_404(Event, pk=pk)
+
+    event_date = event.date
+
+    if not request.user.is_superuser:
+        if not (event.planner and event.planner.user == request.user):
+            messages.error(request, "You do not have permission to delete this event.")
+            return redirect(
+                'catalog:calendar-day',
+                year=event_date.year,
+                month=event_date.month,
+                day=event_date.day,
+            )
+
+    try:
+        event.delete()
+        messages.success(request, f"{event.name} was deleted successfully.")
+    except Exception:
+        messages.error(request, f"{event.name} could not be deleted.")
+
+    return redirect(
+        'catalog:calendar-day',
+        year=event_date.year,
+        month=event_date.month,
+        day=event_date.day,
+    )
+@login_required
+def become_event_planner(request):
+    user = request.user
+
+    if hasattr(user, "eventplanner"):
+        messages.info(request, "You already have an event planner profile.")
+        return redirect("catalog:index")
+
+    if request.method == "POST":
+        form = EventPlannerForm(request.POST, request.FILES)
+        if form.is_valid():
+            planner = form.save(commit=False)
+            planner.user = user
+            planner.save()
+
+            planner_group, _ = Group.objects.get_or_create(name="EventPlanner")
+            user.groups.add(planner_group)
+            user.save()
+
+            messages.success(request, "You're now an event planner!")
+            return redirect("catalog:index")
+    else:
+        form = EventPlannerForm()
+
+    return render(request, "catalog/become_event_planner.html", {"form": form})

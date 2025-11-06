@@ -3,15 +3,46 @@
 {% load crispy_forms_filters %}
 
 {% block content %}
-    {% if perms.catalog.create_event %}
-        <form action="" method="POST">
-              {% csrf_token %}
-                {{ form|crispy }}
-              <input type="submit" value="Submit"/>
-        </form>
-    {% else %}
-        You do not have permissions to create events.
-        Contact an Administrator if this is an error.
-        <a href="{% url 'catalog:index' %}">Home</a>
-    {% endif %}
+
+  {% if user.is_superuser %}
+    <form action="" method="POST">
+      {% csrf_token %}
+      {% for field in form %}
+        {% if field.name == "approved" %}
+          {{ field|as_crispy_field }}
+        {% else %}
+          {{ field|as_crispy_field }}
+        {% endif %}
+      {% endfor %}
+      <input type="submit" value="Submit" class="btn btn-primary mt-2"/>
+    </form>
+
+  {% elif perms.catalog.create_event %}
+    <form action="" method="POST">
+      {% csrf_token %}
+      {% for field in form %}
+        {% if field.name != "approved" and field.name != "planner" %}
+          {{ field|as_crispy_field }}
+        {% endif %}
+      {% endfor %}
+      <input type="submit" value="Submit" class="btn btn-primary mt-2"/>
+    </form>
+
+  {% elif form.instance.pk and form.instance.planner and form.instance.planner.user == user %}
+    <form action="" method="POST">
+      {% csrf_token %}
+      {% for field in form %}
+        {% if field.name != "approved" and field.name != "planner" %}
+          {{ field|as_crispy_field }}
+        {% endif %}
+      {% endfor %}
+      <input type="submit" value="Submit" class="btn btn-primary mt-2"/>
+    </form>
+
+  {% else %}
+    You do not have permission to edit this event.
+    Contact an Administrator if this is an error.
+    <a href="{% url 'catalog:index' %}">Home</a>
+  {% endif %}
+
 {% endblock %}
