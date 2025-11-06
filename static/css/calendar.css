@@ -1,9 +1,7 @@
-/* calendar.css – white → yellow → orange → red heatmap */
+/* calendar.css: The main css file for our project */
 
-/* make month tables easy to target */
 .calendar-month td { transition: background-color .15s ease; }
 
-/* exactly the buckets your Python sets via d.cls (load-0..3) */
 .calendar-month td.load-0 { background-color: var(--bs-white); }            /* no events */
 .calendar-month td.load-1 { background-color: var(--bs-warning-bg-subtle, #fff3cd); } /* yellow */
 .calendar-month td.load-2 { background-color: var(--bs-orange, #fd7e14); color: var(--bs-white); } /* orange */
@@ -12,8 +10,8 @@
 /* out-of-month days dimmed */
 .calendar-month td.is-outside { opacity: .55; }
 
-/* nicer hover (keeps palette readable) */
-.calendar-month td a { color: inherit; text-decoration: none; display:block; padding:.5rem .25rem; }
+/* hovering */
+.calendar-month td a { color: #000000; text-decoration: none; display:block; padding:.5rem .25rem; }
 .calendar-month td:hover { box-shadow: inset 0 0 0 1px rgba(0,0,0,.05); }
 
 /* legend boxes */
@@ -39,4 +37,58 @@ body {
   background-attachment: fixed;
   background-repeat: no-repeat;
   background-size: cover;
+}
+/* global color overrides */
+:root {
+  --bs-body-color: #ff7b00;
+  --bs-heading-color: #e86a00;
+  --bs-link-color: #ff7b00;
+  --bs-link-hover-color: #ffa94d;
+}
+
+body {
+  color: #ff7b00 !important;
+}
+
+/* Day table overrides */
+.white-table,
+.table.white-table {
+  background-color: #ffffff !important;
+}
+
+.white-table tbody tr > th,
+.white-table tbody tr > td {
+  background-color: #ffffff !important;
+}
+
+.white-table thead th {
+  background-color: #f8f9fa !important;
+}
+.white-table th[scope="row"] {
+    color: #000000 !important;
+    background-color: #ffffff !important;
+}
+.color-plz {
+    color: #ff7b00 !important;
+}
+.back-btn {
+    color: #ff7b00;
+    border-color: #ff7b00;
+    background-color: transparent;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+.back-btn:hover,
+.back-btn:focus {
+    background-color: #ff7b00;
+    color: #ffffff;
+    border-color: #ff7b00;
+}
+.helptext {
+    color: #ff7b00 !important;
+    font-weight: 500;
+}
+.form-text.text-muted, [id$='_helptext'] {
+    color: orange !important;
 }
