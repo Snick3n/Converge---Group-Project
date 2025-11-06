@@ -83,8 +83,6 @@ def _cleanup_old_events():
     today = timezone.localtime().date()
     first_of_this_month = date(today.year, today.month, 1)
     Event.objects.filter(date__lt=first_of_this_month).delete()
-    # if you want only unapproved events then:
-    #Event.objects.filter(date__lt=first_of_this_month, approved=False).delete()
 
 def index(request):
 
@@ -245,7 +243,6 @@ def book_event(request):
                 approved=False,
             )
 
-            # attach planner if the user has one
             try:
                 event.planner = request.user.eventplanner
             except EventPlanner.DoesNotExist:
