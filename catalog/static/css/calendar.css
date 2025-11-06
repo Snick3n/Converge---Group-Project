@@ -92,3 +92,12 @@ body {
 .form-text.text-muted, [id$='_helptext'] {
     color: orange !important;
 }
+form p {
+    display:flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+form p label {
+    margin-top: 0.2rem;
+    text-align:left;
+}

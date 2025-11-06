@@ -218,6 +218,7 @@ def book_event(request):
             name = form.cleaned_data["name"]
             detail = form.cleaned_data["detail"]
             expected_attendees = form.cleaned_data["expected_attendees"]
+            selected_genres = form.cleaned_data.get("genre")
 
             if room.is_available(event_date, start_time) and room.capacity >= expected_attendees:
                 chosen_room = room
@@ -240,7 +241,6 @@ def book_event(request):
                 date=event_date,
                 time=start_time,
                 detail=detail,
-                genre=detail,
                 room=chosen_room,
                 approved=False,
             )
@@ -252,6 +252,8 @@ def book_event(request):
                 pass
 
             event.save()
+            if selected_genres:
+                event.genre.set(selected_genres)
 
             messages.success(request, f"Event booked in {event.room.name}!")
             return redirect(

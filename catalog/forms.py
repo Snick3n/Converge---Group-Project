@@ -1,4 +1,4 @@
-from .models import Event,EventPlanner
+from .models import Event,EventPlanner, Genre
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -11,6 +11,12 @@ class EventBookingForm(forms.Form):
         required=False
     )
     expected_attendees = forms.IntegerField(label="Expected attendees", min_value=1)
+
+    genre = forms.ModelChoiceField(
+        label="Select genres to add to this event",
+        queryset=Genre.objects.all(),
+        required=False,
+    )
 
 class EventPlannerForm(forms.ModelForm):
     class Meta:
