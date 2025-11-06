@@ -85,3 +85,10 @@ body {
     color: #ffffff;
     border-color: #ff7b00;
 }
+.helptext {
+    color: #ff7b00 !important;
+    font-weight: 500;
+}
+.form-text.text-muted, [id$='_helptext'] {
+    color: orange !important;
+}
