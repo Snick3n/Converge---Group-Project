@@ -1,8 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 import calendar
 from datetime import date, datetime
 from django.urls import reverse
 from django.utils import timezone
+<<<<<<< Updated upstream
 from django.http import HttpResponseBadRequest
 from .forms import EventBookingForm, EventPlannerForm
 from .models import Event, EventPlanner, Room, VALID_HOURS
@@ -14,6 +15,18 @@ from django.contrib import messages
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group
 
+=======
+from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from .forms import EventBookingForm
+from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP
+from django.views import View, generic
+from django.db.models import Count
+from django.contrib.auth.decorators import user_passes_test, login_required
+from django.utils.decorators import method_decorator
+from django.utils.timezone import make_aware
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+>>>>>>> Stashed changes
 
 SLOTS_PER_DAY = 6
 
@@ -282,6 +295,7 @@ class EventListView( generic.ListView):
     model = Event
 class EventDetailView( generic.DetailView):
     model = Event
+<<<<<<< Updated upstream
 class EventUpdate(UpdateView):
     model = Event
     fields = [
@@ -370,3 +384,31 @@ def become_event_planner(request):
         form = EventPlannerForm()
 
     return render(request, "catalog/become_event_planner.html", {"form": form})
+=======
+
+@login_required
+def rsvp_event(request, event_id, status):
+    event = get_object_or_404(Event, id=event_id)
+    status = request.POST.get('status', 'n')
+
+    valid_statuses = dict(RSVP.rsvp_status).keys()
+    if status not in valid_statuses:
+        status = 'n'
+        messages.error(request, "Invalid status: '{}'")
+        return redirect(request.META.get('HTTP_REFERER'))
+
+    rsvp, created = RSVP.objects.get_or_create(
+        event=event,
+        user=request.user,
+        defaults={'status': status}
+    )
+
+    if created:
+        messages.success(request, "You have RSVP'd for this event.")
+    else:
+        messages.success(request, "You have already RSVP'd for this event.")
+    next_url = request.GET.get('next')
+    if not next_url:
+        next_url = request.META.get('HTTP_REFERER') or reverse('event_list')
+    return redirect(next_url)
+>>>>>>> Stashed changes

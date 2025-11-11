@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
@@ -94,12 +95,17 @@ class EventPlanner(models.Model):
         return self.name
 
 class RSVP(models.Model):
+    rsvp_status = (('y', 'Attending'), ('n', 'Not attending'))
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     event = models.ForeignKey('Event', on_delete=models.CASCADE)
     planner = models.ForeignKey('EventPlanner', on_delete=models.CASCADE)
     message = models.TextField(max_length=500)
     send_date = models.DateField()
     rsvp_count = models.IntegerField(default=0)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
+    status = models.CharField(max_length=1, choices=rsvp_status, default='n')
+
     class Meta:
         ordering = ['event']
     def increase_rsvp(self):
