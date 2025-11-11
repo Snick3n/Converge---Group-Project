@@ -3,42 +3,15 @@ import calendar
 from datetime import date, datetime
 from django.urls import reverse
 from django.utils import timezone
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-from django.http import HttpResponseBadRequest
 from .forms import EventBookingForm, EventPlannerForm
-from .models import Event, EventPlanner, Room, VALID_HOURS
-from django.views import View, generic
-from django.db.models import Count
-from django.contrib.auth.decorators import user_passes_test, login_required
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group
-
-=======
 from django.http import HttpResponseBadRequest, HttpResponseForbidden
-from .forms import EventBookingForm
 from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP
 from django.views import View, generic
 from django.db.models import Count
 from django.contrib.auth.decorators import user_passes_test, login_required
-=======
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
-from .forms import EventBookingForm
-from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP
-from django.views import View, generic
-from django.db.models import Count
-from django.contrib.auth.decorators import user_passes_test, login_required
->>>>>>> Stashed changes
-from django.utils.decorators import method_decorator
-from django.utils.timezone import make_aware
 from django.contrib import messages
-from django.views.decorators.http import require_POST
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
 
 SLOTS_PER_DAY = 6
 
@@ -307,8 +280,6 @@ class EventListView( generic.ListView):
     model = Event
 class EventDetailView( generic.DetailView):
     model = Event
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 class EventUpdate(UpdateView):
     model = Event
     fields = [
@@ -397,9 +368,6 @@ def become_event_planner(request):
         form = EventPlannerForm()
 
     return render(request, "catalog/become_event_planner.html", {"form": form})
-=======
-=======
->>>>>>> Stashed changes
 
 @login_required
 def rsvp_event(request, event_id, status):
@@ -425,9 +393,4 @@ def rsvp_event(request, event_id, status):
     next_url = request.GET.get('next')
     if not next_url:
         next_url = request.META.get('HTTP_REFERER') or reverse('event_list')
-<<<<<<< Updated upstream
     return redirect(next_url)
->>>>>>> Stashed changes
-=======
-    return redirect(next_url)
->>>>>>> Stashed changes
