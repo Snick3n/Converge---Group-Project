@@ -9,11 +9,13 @@ def register(request):
             uname = form.cleaned_data['username']
             form.save()
             user = User.objects.get(username=uname)
-            goer_group = Group.objects.get(name='EventGoer')
+            user.is_staff = False
+            user.is_superuser = False
+            goer_group, created = Group.objects.get_or_create(name='EventGoer')
             user.groups.add(goer_group)
             user.save()
             return redirect('login')
-        return redirect('index')
+        return redirect('catalog:index')
     else:
         form = RegisterForm()
     return render(request, 'register.html', {'form': form})

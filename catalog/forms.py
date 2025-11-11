@@ -1,18 +1,24 @@
-from django import forms
-from .models import Event
+from .models import Event,EventPlanner, Genre
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
-class EventBookingForm(forms.ModelForm):
-    expected_attendees = forms.IntegerField(min_value=1, max_value=100, required=True)
+class EventBookingForm(forms.Form):
+    name = forms.CharField(label="Event name", max_length=255)
+    detail = forms.CharField(
+        label="Details",
+        widget=forms.Textarea,
+        required=False
+    )
+    expected_attendees = forms.IntegerField(label="Expected attendees", min_value=1)
 
+    genre = forms.ModelChoiceField(
+        label="Select genres to add to this event",
+        queryset=Genre.objects.all(),
+        required=False,
+    )
+
+class EventPlannerForm(forms.ModelForm):
     class Meta:
-        model = Event
-        fields = ["name", "genre", "detail", "planner", "expected_attendees", "room"]
-
-    def __init__(self, *args, **kwargs):
-        available_rooms = kwargs.pop("available_rooms", None)
-        super().__init__(*args, **kwargs)
-        if available_rooms is not None:
-            self.fields["room"].queryset = available_rooms
+        model = EventPlanner
+        fields = ['name', 'detail', 'image']

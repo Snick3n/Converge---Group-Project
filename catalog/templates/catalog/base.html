@@ -6,12 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Welcome to Converge!{% endblock %}</title>
     <link href="{% static 'css/bootstrap_formatted.css' %}" rel="stylesheet">
-    {% load static %}
     <link rel="stylesheet" href="{% static 'css/calendar.css' %}">
-    {% load static %}
-    <div style="background-image: url('{% static "img/page_02.png" %}');">
-    </div>
-
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark" role="navigation" aria-label="Main">
@@ -44,9 +39,10 @@
                     <a class="nav-link" href="{% url 'catalog:index' %} ">Search Events</a>
                 </li>
                 {%  if user.is_authenticated %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'catalog:index' %} ">Create Events</a>
-                    </li>
+                    {%  if user.eventplanner %}
+                    {% else %}
+                        <a class="nav-link" href="{% url 'catalog:become_event_planner' %} ">Become an event planner</a>
+                    {% endif %}
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav ml-auto">

@@ -2,7 +2,7 @@
 {% block content %}
 <h2 class="h4 mb-3">{{ date|date:"l, F j, Y" }}</h2>
 
-<table class="table table-bordered align-middle text-center">
+<table class="table table-bordered align-middle text-center white-table">
   <thead class="table-light">
     <tr>
       <th style="width:10rem;">Time</th>
@@ -17,16 +17,89 @@
         <th scope="row">{{ row.hour|add:0 }}:00 – {{ row.hour|add:2 }}:00</th>
         {% for c in row.cells %}
           <td>
-            {% if c.booked %}
+          {% if c.has_approved %}
               <span class="badge text-bg-secondary">Booked</span><br>
-              <small>{{ c.event.name }}</small>
-            {% else %}
+              {% for ev in c.events %}
+                  {% if user.is_superuser %}
+                      <a href="{% url 'catalog:event_detail' ev.pk %}">{{ ev.name }}{% if not ev.approved %} (pending){% endif %}</a>
+                  {% elif ev.planner and ev.planner.user == user %}
+                      <a href="{% url 'catalog:event_detail' ev.pk %}">{{ ev.name }}{% if not ev.approved %} (pending){% endif %}</a>
+                  {% elif ev.approved %}
+                      <a href="{% url 'catalog:event_detail' ev.pk %}">{{ ev.name }}</a>
+                  {% endif %}
+
+                  {% if user.is_superuser %}
+                      <div class="mb-2 d-flex gap-1 justify-content-center">
+                        <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
+                      </div>
+                  {% else %}
+                      {% if ev.planner and ev.planner.user == user %}
+                          <div class="mb-2 d-flex gap-1 justify-content-center">
+                            <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
+                          </div>
+                      {% endif %}
+                  {% endif %}
+              {% endfor %}
+          {% else %}
+              {% with user_has_event=False %}
+                  {% for ev in c.events %}
+                      {% if ev.planner and ev.planner.user == user %}
+                           {% with user_has_event=True %}{% endwith %}
+                      {% endif %}
+                  {% endfor %}
+              {% endwith %}
+
               {% if user.is_superuser %}
-                <a href="{{ c.book_url }}" class="btn btn-primary btn-sm">Book</a>
+                  <span class="text-muted small">Pending events:</span><br>
+                  {% for ev in c.events %}
+                      <a href="{% url 'catalog:event_detail' ev.pk %}">{{ ev.name }} (pending)</a>
+                      <div class="mb-2 d-flex gap-1 justify-content-center">
+                        <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                           onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
+                      </div>
+                  {% endfor %}
+
+                  {% if can_book %}
+                      {% if c.events %}
+                        <a href="{{ c.book_url }}" class="btn btn-outline-primary btn-sm">Book another</a>
+                      {% else%}
+                        <a href="{{ c.book_url }}" class="btn btn-primary btn-sm">Book</a>
+                      {% endif %}
+                  {% endif %}
+
+              {% elif c.events and c.events.0.planner and c.events.0.planner.user == user %}
+                  <span class="text-muted small">Your pending event(s):</span><br>
+                  {% for ev in c.events %}
+                      {% if ev.planner and ev.planner.user == user %}
+                          <a href="{% url 'catalog:event_detail' ev.pk %}">{{ ev.name }} (pending)</a>
+                          <div class="mb-2 d-flex gap-1 justify-content-center">
+                            <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                               onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
+                          </div>
+                      {% endif %}
+                  {% endfor %}
+
+                  {% if can_book %}
+                      {% if c.events %}
+                        <a href="{{ c.book_url }}" class="btn btn-outline-primary btn-sm">Book another</a>
+                      {% else %}
+                        <a href="{{ c.book_url }}" class="btn btn-primary btn-sm">Book</a>
+                      {% endif %}
+                  {% endif %}
               {% else %}
-                <span class="text-muted small">Available</span>
+                  {% if can_book %}
+                      <a href="{{ c.book_url }}" class="btn btn-primary btn-sm">Book</a>
+                  {% else %}
+                      <span class="text-muted small">Available</span>
+                  {% endif %}
               {% endif %}
-            {% endif %}
+          {% endif %}
           </td>
         {% endfor %}
       </tr>
@@ -34,5 +107,5 @@
   </tbody>
 </table>
 
-<a href="/" class="btn btn-outline-secondary">Back to Calendar</a>
+<a href="/" class="btn back-btn">Back to Calendar</a>
 {% endblock %}

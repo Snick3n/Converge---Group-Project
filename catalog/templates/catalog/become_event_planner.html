@@ -1,0 +1,10 @@
+{% extends "catalog/base.html" %}
+{% block content %}
+  <h2>Become an Event Planner</h2>
+  <p>Fill this out to create your event planner profile.</p>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Create Planner Profile</button>
+  </form>
+{% endblock %}
