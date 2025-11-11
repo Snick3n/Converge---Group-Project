@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-from .views import become_event_planner
 
 app_name = 'catalog'
 urlpatterns = [
@@ -14,4 +13,5 @@ urlpatterns = [
     path('event/<uuid:pk>/update/', views.EventUpdate.as_view(), name='event_update'),
     path('event/<uuid:pk>/delete/', views.event_delete, name='event_delete'),
     path('become_event_planner/', views.become_event_planner, name="become_event_planner"),
+    path('events/<int:event_id>/rsvp/<str:status>/', views.rsvp_event, name='rsvp_event'),
 ]
