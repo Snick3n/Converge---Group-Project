@@ -12,10 +12,13 @@ urlpatterns = [
     path('event_list/', views.EventListView.as_view(), name='event_list'),
     path('event_detail/<uuid:pk>', views.EventDetailView.as_view(), name='event_detail'),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     path('event/<uuid:pk>/update/', views.EventUpdate.as_view(), name='event_update'),
     path('event/<uuid:pk>/delete/', views.event_delete, name='event_delete'),
     path('become_event_planner/', views.become_event_planner, name="become_event_planner"),
 =======
+=======
+>>>>>>> Stashed changes
     path('events/<int:event_id>/rsvp/<str:status>/', views.rsvp_event, name='rsvp_event'),
 
 >>>>>>> Stashed changes
