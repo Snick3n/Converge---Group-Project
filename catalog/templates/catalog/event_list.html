@@ -4,14 +4,18 @@
     <h1>Event List</h1>
 
     {% if event_list %}
-        <ul>
+        <table class="table table-bordered">
             {% for event in event_list %}
-                <li>
-                    <a href="{% url 'catalog:event_detail' event.pk %}">{{ event.name }}</a>
-                    (Planner: {{ event.planner}})
-                </li>
+                <tr class="table-secondary"></tr>
+                <td><a href="{% url 'catalog:event_detail' event.pk %}">{{ event.name }}</a></td>
+                <td>(Planner: {{ event.planner}})</td>
+                {% if user.is_superuser%}
+                    <td><a class="btn btn-primary">Edit Event</a></td>
+                    <td><a class="btn btn-danger">Delete Event</a></td>
+                {% endif %}
+                <td><a href="{% url 'catalog:rsvp_event' event.id 'yes' %}?next={{ request.path }}" class ="btn btn-success">RSVP</a></td>
             {% endfor %}
-        </ul>
+        </table>
     {% else %}
         <p>There are no Events Scheduled.</p>
     {% endif %}
