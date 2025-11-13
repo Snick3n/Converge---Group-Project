@@ -1,0 +1,16 @@
+{% extends "catalog/base.html" %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
+
+{% block content %}
+    {% if perms.catalog.add_eventplanner or perms.catalog.change_eventplanner %}
+        <form action="" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <input type="submit" value="Submit" class="btn btn-primary">
+        </form>
+    {% else %}
+        <p>You do not have permission to access this feature.</p>
+        <a href="{% url 'catalog:index' %}" class="btn btn-secondary">Home</a>
+    {% endif %}
+{% endblock %}

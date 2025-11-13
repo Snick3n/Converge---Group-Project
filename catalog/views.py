@@ -6,7 +6,7 @@ from django.utils import timezone
 from .forms import EventBookingForm, EventPlannerForm
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP
 from django.views import View, generic
 from django.db.models import Count
@@ -276,6 +276,24 @@ class EventPlannerListView( generic.ListView):
     model = EventPlanner
 class EventPlannerDetailView( generic.DetailView):
     model = EventPlanner
+
+class EventPlannerUpdate(UpdateView):
+    model = EventPlanner
+    fields = ['name', 'detail', 'image']
+
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.save()
+        return HttpResponseRedirect(reverse('catalog:eventplanner_list'))
+
+def EventPlannerDelete(request, pk):
+    eventplanner = get_object_or_404(EventPlanner, pk=pk)
+    try:
+        eventplanner.delete()
+        messages.success(request, (eventplanner.name + " has been deleted."))
+    except:
+        messages.error(request, (eventplanner.name + " cannot be deleted. Events exist for this planner."))
+    return redirect('catalog:eventplanner_list')
 class EventListView( generic.ListView):
     model = Event
     template_name = "catalog/event_list.html"

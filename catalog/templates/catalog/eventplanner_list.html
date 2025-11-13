@@ -2,16 +2,47 @@
 
 {% block content %}
     <h1>Event Planners</h1>
-    {% if object_list %}
-        <ul>
-            {% for planner in object_list %}
-                <li>
-                    <a href="{% url 'catalog:eventplanner_detail' planner.pk %}"> {{ planner.name }}</a>
-                </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No event planners found.</p>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
     {% endif %}
-    <a href="{% url 'catalog:index' %}" class="btn back-btn">Back</a>
+
+    {% if eventplanner_list %}
+        <table class="table table-bordered">
+            {% for planner in eventplanner_list %}
+                <tr class="table-secondary">
+                    <td>
+                        <a href="{% url 'catalog:eventplanner_detail' planner.pk %}">{{ planner.name }}</a>
+                    </td>
+
+                    {% if user.is_superuser %}
+                        {% if not planner.event_set.exists %}
+                            <td>
+                                <a href="{% url 'catalog:eventplanner_delete' pk=planner.pk %}"
+                                   onclick="return confirm('Are you sure you want to delete?')"
+                                   class="btn btn-danger">
+                                    Delete
+                                </a>
+                            </td>
+                        {% else %}
+                            <td>Events Exist - Cannot delete planner</td>
+                        {% endif %}
+                        <td>
+                            <a href="{% url 'catalog:eventplanner_update' pk=planner.pk %}"
+                               class="btn btn-primary">
+                                Edit Planner
+                            </a>
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>There are no event planners.</p>
+    {% endif %}
 {% endblock %}
