@@ -30,15 +30,15 @@
 
                   {% if user.is_superuser %}
                       <div class="mb-2 d-flex gap-1 justify-content-center">
-                        <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
-                        <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                        <a href="{% url 'catalog:event_update' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="{% url 'catalog:event_delete' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-danger"
                            onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
                       </div>
                   {% else %}
                       {% if ev.planner and ev.planner.user == user %}
                           <div class="mb-2 d-flex gap-1 justify-content-center">
-                            <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                            <a href="{% url 'catalog:event_update' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="{% url 'catalog:event_delete' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-danger"
                                onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
                           </div>
                       {% endif %}
@@ -58,8 +58,8 @@
                   {% for ev in c.events %}
                       <a href="{% url 'catalog:event_detail' ev.pk %}">{{ ev.name }} (pending)</a>
                       <div class="mb-2 d-flex gap-1 justify-content-center">
-                        <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
-                        <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                        <a href="{% url 'catalog:event_update' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-primary">Edit</a>
+                        <a href="{% url 'catalog:event_delete' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-danger"
                            onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
                       </div>
                   {% endfor %}
@@ -78,8 +78,8 @@
                       {% if ev.planner and ev.planner.user == user %}
                           <a href="{% url 'catalog:event_detail' ev.pk %}">{{ ev.name }} (pending)</a>
                           <div class="mb-2 d-flex gap-1 justify-content-center">
-                            <a href="{% url 'catalog:event_update' ev.pk %}" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="{% url 'catalog:event_delete' ev.pk %}" class="btn btn-sm btn-danger"
+                            <a href="{% url 'catalog:event_update' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="{% url 'catalog:event_delete' ev.pk %}?next={{ request.path }}" class="btn btn-sm btn-danger"
                                onclick="return confirm('Are you sure you want to delete this event?');">Delete</a>
                           </div>
                       {% endif %}

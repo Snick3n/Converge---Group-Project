@@ -248,7 +248,7 @@ def book_event(request):
 
             event.save()
             if selected_genres:
-                event.genre.set(selected_genres)
+                event.genre.set([selected_genres])
 
             messages.success(request, f"Event booked in {event.room.name}!")
             return redirect(
@@ -296,6 +296,18 @@ def EventPlannerDelete(request, pk):
     return redirect('catalog:eventplanner_list')
 class EventListView( generic.ListView):
     model = Event
+    template_name = "catalog/event_list.html"
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("planner")
+        user = self.request.user
+        for e in qs:
+            is_owner = bool(e.planner and getattr(e.planner, 'user', None) == user)
+            can_manage= user.is_superuser or is_owner
+            show_event = e.approved or can_manage
+            e.is_owner = is_owner
+            e.can_manage = can_manage
+            e.show_event = show_event
+        return qs
 class EventDetailView( generic.DetailView):
     model = Event
 class EventUpdate(UpdateView):
@@ -324,6 +336,9 @@ class EventUpdate(UpdateView):
         return super().form_valid(form)
 
     def get_success_url(self):
+        next_url = self.request.GET.get("next")
+        if next_url:
+            return next_url
         event_date = self.object.date
         return reverse(
             "catalog:calendar-day",
