@@ -11,19 +11,6 @@
     <p><strong>Room:</strong> {{ event.room }}</p>
     <p><strong>Max Attendees:</strong> {{ event.max_attendees }}</p>
     <p><strong>Genre:</strong> {{ event.genre.all|join:", " }}</p>
-
-    <div style="margin-left:20px;margin-top:20px">
-        <h4>RSVPs</h4>
-        {% for r in event.rsvp_set.all %}
-            <hr>
-            <p><strong>Message:</strong> {{ r.message }}</p>
-            <p><strong>Send date:</strong> {{ r.send_date }}</p>
-            <p><strong>RSVP count:</strong> {{ r.rsvp_count }}</p>
-            <p class="text-muted"><strong>Id:</strong> {{ r.id }}</p>
-        {% empty %}
-            <p>No RSVPs yet.</p>
-        {% endfor %}
-    </div>
     <p>
         <a href="{% url 'catalog:event_list' %}" class="btn back-btn">Back</a>
     <p/>

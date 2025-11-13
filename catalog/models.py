@@ -90,7 +90,7 @@ class EventPlanner(models.Model):
     detail = models.TextField(max_length=1000)
     image = models.ImageField(upload_to='event-planner-images', null=True, blank=True)
     def get_absolute_url(self):
-        return reverse('event planner detail', args=[str(self.id,)])
+        return reverse('eventplanner_detail', args=[str(self.id,)])
     def __str__(self):
         return self.name
 
@@ -103,7 +103,6 @@ class RSVP(models.Model):
     message = models.TextField(max_length=500)
     send_date = models.DateField()
     rsvp_count = models.IntegerField(default=0)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT)
     status = models.CharField(max_length=1, choices=rsvp_status, default='n')
 
     class Meta:
