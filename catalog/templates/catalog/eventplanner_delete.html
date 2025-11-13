@@ -1,0 +1,16 @@
+{% extends "catalog/base.html" %}
+
+{% block content %}
+    {% if perms.catalog.delete_eventplanner %}
+        <h1>Delete Event Planner: {{ eventplanner.name }}</h1>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="submit" class="btn btn-danger" value="Delete">
+            <a href="{% url 'catalog:eventplanner_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+    {% else %}
+        <p>You do not have permission to access this feature.</p>
+        <a href="{% url 'catalog:index' %}" class="btn btn-primary">Home</a>
+    {% endif %}
+{% endblock %}
