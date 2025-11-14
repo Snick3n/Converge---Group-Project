@@ -6,7 +6,7 @@ from django.utils import timezone
 from .forms import EventBookingForm, EventPlannerForm
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group
-from django.http import HttpResponseBadRequest, HttpResponseForbidden
+from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP
 from django.views import View, generic
 from django.db.models import Count
@@ -250,7 +250,7 @@ def book_event(request):
 
             event.save()
             if selected_genres:
-                event.genre.set(selected_genres)
+                event.genre.set([selected_genres])
 
             messages.success(request, f"Event booked in {event.room.name}!")
             return redirect(
@@ -278,8 +278,38 @@ class EventPlannerListView( generic.ListView):
     model = EventPlanner
 class EventPlannerDetailView( generic.DetailView):
     model = EventPlanner
+
+class EventPlannerUpdate(UpdateView):
+    model = EventPlanner
+    fields = ['name', 'detail', 'image']
+
+    def form_valid(self, form):
+        post = form.save(commit=False)
+        post.save()
+        return HttpResponseRedirect(reverse('catalog:eventplanner_list'))
+
+def EventPlannerDelete(request, pk):
+    eventplanner = get_object_or_404(EventPlanner, pk=pk)
+    try:
+        eventplanner.delete()
+        messages.success(request, (eventplanner.name + " has been deleted."))
+    except:
+        messages.error(request, (eventplanner.name + " cannot be deleted. Events exist for this planner."))
+    return redirect('catalog:eventplanner_list')
 class EventListView( generic.ListView):
     model = Event
+    template_name = "catalog/event_list.html"
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("planner")
+        user = self.request.user
+        for e in qs:
+            is_owner = bool(e.planner and getattr(e.planner, 'user', None) == user)
+            can_manage= user.is_superuser or is_owner
+            show_event = e.approved or can_manage
+            e.is_owner = is_owner
+            e.can_manage = can_manage
+            e.show_event = show_event
+        return qs
 class EventDetailView( generic.DetailView):
     model = Event
 
@@ -317,6 +347,9 @@ class EventUpdate(UpdateView):
         return super().form_valid(form)
 
     def get_success_url(self):
+        next_url = self.request.GET.get("next")
+        if next_url:
+            return next_url
         event_date = self.object.date
         return reverse(
             "catalog:calendar-day",

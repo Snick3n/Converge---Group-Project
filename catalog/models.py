@@ -93,7 +93,7 @@ class EventPlanner(models.Model):
     detail = models.TextField(max_length=1000)
     image = models.ImageField(upload_to='event-planner-images', null=True, blank=True)
     def get_absolute_url(self):
-        return reverse('event planner detail', args=[str(self.id,)])
+        return reverse('eventplanner_detail', args=[str(self.id,)])
     def __str__(self):
         return self.name
 
