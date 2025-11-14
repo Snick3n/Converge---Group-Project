@@ -1,30 +1,69 @@
 {% extends "catalog/base.html" %}
+
 {% block content %}
 <h1>Event: {{ event.name }}</h1>
-    <p><strong>Event Planner:</strong>
-        <a href="{% url 'catalog:eventplanner_detail' event.planner.pk %}">{{ event.planner }}</a>
 
-    </p>
-    <p><strong>Detail:</strong> {{ event.detail }}</p>
-    <p><strong>Date:</strong> {{ event.date }}</p>
-    <p><strong>Time:</strong> {{ event.time }}</p>
-    <p><strong>Room:</strong> {{ event.room }}</p>
-    <p><strong>Max Attendees:</strong> {{ event.max_attendees }}</p>
-    <p><strong>Genre:</strong> {{ event.genre.all|join:", " }}</p>
+<p><strong>Event Planner:</strong>
+    <a href="{% url 'catalog:eventplanner_detail' event.planner.pk %}">
+        {{ event.planner }}
+    </a>
+</p>
 
-    <div style="margin-left:20px;margin-top:20px">
-        <h4>RSVPs</h4>
-        {% for r in event.rsvp_set.all %}
-            <hr>
-            <p><strong>Message:</strong> {{ r.message }}</p>
-            <p><strong>Send date:</strong> {{ r.send_date }}</p>
-            <p><strong>RSVP count:</strong> {{ r.rsvp_count }}</p>
-            <p class="text-muted"><strong>Id:</strong> {{ r.id }}</p>
-        {% empty %}
-            <p>No RSVPs yet.</p>
-        {% endfor %}
-    </div>
+<p><strong>Detail:</strong> {{ event.detail }}</p>
+<p><strong>Date:</strong> {{ event.date }}</p>
+<p><strong>Time:</strong> {{ event.time }}</p>
+<p><strong>Room:</strong> {{ event.room }}</p>
+<p>
+    <strong>Attendees / Max Attendees:</strong>
+    {{ event.rsvp_count }} / {{ event.max_attendees }}
+</p>
+
+<p><strong>Genre:</strong> {{ event.genre.all|join:", " }}</p>
+
+{% if user.is_authenticated %}
     <p>
-        <a href="{% url 'catalog:event_list' %}" class="btn back-btn">Back</a>
-    <p/>
+        <strong>Your RSVP:</strong>
+        {% if user_rsvp %}
+            {{ user_rsvp.get_status_display }}
+        {% else %}
+            <em>No response yet</em>
+        {% endif %}
+    </p>
+
+    {# Event is full? #}
+    {% if event.rsvp_count >= event.max_attendees %}
+        {% if user_rsvp and user_rsvp.status == "y" %}
+            {# Event is full, but this user already has a spot → allow buttons #}
+            <p>
+                <a href="{% url 'catalog:rsvp_event' event.id 'y' %}?next={{ request.path }}" class="btn btn-primary">
+                    Attending
+                </a>
+                <a href="{% url 'catalog:rsvp_event' event.id 'n' %}?next={{ request.path }}" class="btn btn-secondary">
+                    Not attending
+                </a>
+            </p>
+        {% else %}
+            {# Event is full and user does NOT have a spot → block signups #}
+            <p><strong>This event is full. No more signups are allowed.</strong></p>
+        {% endif %}
+    {% else %}
+        {# Event is NOT full → show buttons normally #}
+        <p>
+            <a href="{% url 'catalog:rsvp_event' event.id 'y' %}?next={{ request.path }}" class="btn btn-primary">
+                Attending
+            </a>
+            <a href="{% url 'catalog:rsvp_event' event.id 'n' %}?next={{ request.path }}" class="btn btn-secondary">
+                Not attending
+            </a>
+        </p>
+    {% endif %}
+{% else %}
+    <p>
+        <a href="{% url 'login' %}?next={{ request.path }}">Log in to RSVP</a>
+    </p>
+{% endif %}
+
+<p>
+    <a href="{% url 'catalog:event_list' %}" class="btn back-btn">Back</a>
+</p>
 {% endblock %}

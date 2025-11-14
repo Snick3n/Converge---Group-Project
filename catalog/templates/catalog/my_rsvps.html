@@ -1,0 +1,28 @@
+{% extends "catalog/base.html" %}
+
+{% block content %}
+  <h1>My RSVPs</h1>
+
+  {% if rsvps %}
+    <ul>
+      {% for rsvp in rsvps %}
+        <li>
+          <strong>
+            <a href="{% url 'catalog:event_detail' rsvp.event.id %}">
+              {{ rsvp.event.name }}
+            </a>
+          </strong>
+          <br>
+          <span>
+            {{ rsvp.event.date|date:"M d, Y" }} at {{ rsvp.event.time|time:"H:i" }}
+          </span>
+          <br>
+          <span>Status: {{ rsvp.get_status_display }}</span>
+        </li>
+        <hr>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You haven't signed up for any events yet.</p>
+  {% endif %}
+{% endblock %}

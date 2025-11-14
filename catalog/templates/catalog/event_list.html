@@ -1,23 +1,75 @@
 {% extends "catalog/base.html" %}
 
 {% block content %}
-    <h1>Event List</h1>
+<h1>Event List</h1>
 
-    {% if event_list %}
-        <table class="table table-bordered">
+{% if event_list %}
+    <table class="table table-bordered">
+        <thead>
+            <tr class="table-secondary">
+                <th>Event</th>
+                <th>Planner</th>
+                {% if user.is_superuser %}
+                    <th>Edit</th>
+                    <th>Delete</th>
+                {% endif %}
+                <th>RSVP</th>
+            </tr>
+        </thead>
+        <tbody>
             {% for event in event_list %}
-                <tr class="table-secondary"></tr>
-                <td><a href="{% url 'catalog:event_detail' event.pk %}">{{ event.name }}</a></td>
-                <td>(Planner: {{ event.planner}})</td>
-                {% if user.is_superuser%}
+            <tr>
+                <td>
+                    <a href="{% url 'catalog:event_detail' event.pk %}">
+                        {{ event.name }}
+                    </a>
+                    <br>
+                    <small>
+                        {{ event.date }} at {{ event.time }}<br>
+                        Attendees: {{ event.rsvp_count }} / {{ event.max_attendees }}
+                    </small>
+                </td>
+
+                <td>{{ event.planner }}</td>
+
+                {% if user.is_superuser %}
                     <td><a class="btn btn-primary">Edit Event</a></td>
                     <td><a class="btn btn-danger">Delete Event</a></td>
                 {% endif %}
-                <td><a href="{% url 'catalog:rsvp_event' event.id 'yes' %}?next={{ request.path }}" class ="btn btn-success">RSVP</a></td>
+
+                <td>
+                    {% if user.is_authenticated %}
+
+                        {% if event.user_rsvp %}
+                            {# User already has an RSVP for this event #}
+                            <span class="text-success">
+                                <strong>You are {{ event.user_rsvp.get_status_display }}</strong>
+                            </span>
+
+                        {% else %}
+                            {# User has NOT RSVP'd yet #}
+
+                            {% if event.rsvp_count >= event.max_attendees %}
+                                <p><strong>Event full</strong></p>
+                            {% else %}
+                                <a href="{% url 'catalog:rsvp_event' event.id 'y' %}?next={{ request.path }}"
+                                   class="btn btn-success">
+                                    RSVP
+                                </a>
+                            {% endif %}
+                        {% endif %}
+
+                    {% else %}
+                        <a href="{% url 'login' %}?next={{ request.path }}">Log in to RSVP</a>
+                    {% endif %}
+                </td>
+            </tr>
             {% endfor %}
-        </table>
-    {% else %}
-        <p>There are no Events Scheduled.</p>
-    {% endif %}
-    <a href="{% url 'catalog:index' %}" class="btn back-btn">Back</a>
+        </tbody>
+    </table>
+{% else %}
+    <p>There are no Events Scheduled.</p>
+{% endif %}
+
+<a href="{% url 'catalog:index' %}" class="btn back-btn">Back</a>
 {% endblock %}
