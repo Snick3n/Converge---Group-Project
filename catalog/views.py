@@ -12,6 +12,8 @@ from django.views import View, generic
 from django.db.models import Count
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 
 SLOTS_PER_DAY = 6
 
@@ -310,6 +312,15 @@ class EventListView( generic.ListView):
         return qs
 class EventDetailView( generic.DetailView):
     model = Event
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        if user.is_authenticated:
+            context['user_rsvp'] = RSVP.objects.filter(event=self.object, user=user).first()
+        else:
+            context['user_rsvp'] = None
+        return context
 class EventUpdate(UpdateView):
     model = Event
     fields = [
@@ -402,28 +413,69 @@ def become_event_planner(request):
 
     return render(request, "catalog/become_event_planner.html", {"form": form})
 
+
 @login_required
 def rsvp_event(request, event_id, status):
     event = get_object_or_404(Event, id=event_id)
-    status = request.POST.get('status', 'n')
 
-    valid_statuses = dict(RSVP.rsvp_status).keys()
+    valid_statuses = dict(RSVP.RSVP_STATUS).keys()  # ['y', 'n']
     if status not in valid_statuses:
         status = 'n'
-        messages.error(request, "Invalid status: '{}'")
-        return redirect(request.META.get('HTTP_REFERER'))
+        messages.error(request, "Invalid RSVP status; defaulted to 'Not attending'.")
 
-    rsvp, created = RSVP.objects.get_or_create(
-        event=event,
-        user=request.user,
-        defaults={'status': status}
-    )
+    # Find any existing RSVP for this user+event
+    existing = RSVP.objects.filter(event=event, user=request.user).first()
+    previous_status = existing.status if existing else None
 
-    if created:
-        messages.success(request, "You have RSVP'd for this event.")
+    # Figure out where to go back to
+    next_url = request.GET.get('next') or request.META.get('HTTP_REFERER') or reverse('catalog:event_list')
+
+    # If user is trying to change to 'Attending' and the event is full (and they weren't already attending)
+    if previous_status != 'y' and status == 'y' and event.rsvp_count >= event.max_attendees:
+        messages.error(request, "This event is full. You cannot RSVP as attending.")
+        return redirect(next_url)
+
+    # Create or update the RSVP
+    if existing:
+        rsvp = existing
+        rsvp.status = status
+        rsvp.save()
+        created = False
     else:
-        messages.success(request, "You have already RSVP'd for this event.")
-    next_url = request.GET.get('next')
-    if not next_url:
-        next_url = request.META.get('HTTP_REFERER') or reverse('event_list')
+        rsvp = RSVP.objects.create(
+            event=event,
+            user=request.user,
+            status=status,
+        )
+        created = True
+
+    # 🔢 Update event.rsvp_count based on status change
+    if previous_status != 'y' and status == 'y':
+        event.rsvp_count += 1
+    elif previous_status == 'y' and status != 'y' and event.rsvp_count > 0:
+        event.rsvp_count -= 1
+
+    event.save()
+
+    # Messages
+    if created and status == 'y':
+        messages.success(request, "You have signed up for this event.")
+    elif status == 'y':
+        messages.success(request, "Your RSVP has been updated to 'Attending'.")
+    else:
+        messages.success(request, "Your RSVP has been updated.")
+
     return redirect(next_url)
+
+class UserRSVPListView(LoginRequiredMixin, generic.ListView):
+    model = RSVP
+    template_name = 'catalog/my_rsvps.html'
+    context_object_name = 'rsvps'
+
+    def get_queryset(self):
+        return (
+            RSVP.objects
+            .filter(user=self.request.user, status='y')
+            .select_related('event')
+            .order_by('event__date', 'event__time')
+        )

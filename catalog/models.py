@@ -43,14 +43,17 @@ class Event(models.Model):
     detail = models.TextField(max_length=1000)
     room = models.ForeignKey('Room', on_delete=models.RESTRICT)
     approved = models.BooleanField(default=False)
+    rsvp_count = models.PositiveIntegerField(default=0)
+
     class Meta:
         ordering = ['date', 'time']
         constraints = [
             models.UniqueConstraint(
                 fields=['room', 'date', 'time'],
                 condition=Q(approved=True),
-                name='uniq_room_date_times')
-        ]
+                name='uniq_room_date_times'
+                )
+            ]
     def end_time(self) -> time:
         return (timezone.datetime.combine(self.date, self.time) + timedelta(hours=SLOT_DURATION)).time()
     def clean(self):
@@ -95,25 +98,19 @@ class EventPlanner(models.Model):
         return self.name
 
 class RSVP(models.Model):
-    rsvp_status = (('y', 'Attending'), ('n', 'Not attending'))
+    RSVP_STATUS = (('y', 'Attending'), ('n', 'Not attending'))
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    event = models.ForeignKey('Event', on_delete=models.CASCADE)
-    planner = models.ForeignKey('EventPlanner', on_delete=models.CASCADE)
-    message = models.TextField(max_length=500)
-    send_date = models.DateField()
-    rsvp_count = models.IntegerField(default=0)
-    status = models.CharField(max_length=1, choices=rsvp_status, default='n')
+    id = models.AutoField(primary_key=True)  # ← let Django use an integer PK
+    event = models.ForeignKey('Event', on_delete=models.CASCADE, related_name='rsvps')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.RESTRICT, null=True, related_name='rsvps')
+    status = models.CharField(max_length=1, choices=RSVP_STATUS, default='y')
 
     class Meta:
         ordering = ['event']
-    def increase_rsvp(self):
-        self.rsvp_count += 1
-        return self.rsvp_count
+        unique_together = ('event', 'user')  # one RSVP per user per event
+
     def __str__(self):
-        return f'{self.id} ({self.event})'
-
-
+        return f'{self.user} → {self.event} ({self.get_status_display()})'
 
 
 
