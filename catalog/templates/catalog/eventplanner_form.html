@@ -3,14 +3,12 @@
 {% load crispy_forms_filters %}
 
 {% block content %}
-    {% if perms.catalog.add_eventplanner or perms.catalog.change_eventplanner %}
-        <form action="" method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-            {{ form|crispy }}
-            <input type="submit" value="Submit" class="btn btn-primary">
-        </form>
-    {% else %}
-        <p>You do not have permission to access this feature.</p>
-        <a href="{% url 'catalog:index' %}" class="btn btn-secondary">Home</a>
-    {% endif %}
+    <h1>Edit Event Planner</h1>
+
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <input type="submit" value="Submit" class="btn btn-primary">
+        <a href="{% url 'catalog:eventplanner_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
 {% endblock %}

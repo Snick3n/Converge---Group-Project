@@ -1,0 +1,17 @@
+{% extends "catalog/base.html" %}
+
+{% block content %}
+    {% if user.is_superuser %}
+        <h1>Delete User: {{ user_obj.get_full_name|default:user_obj.username }}</h1>
+
+        <form method="post">
+            {% csrf_token %}
+            <input type="submit" class="btn btn-danger" value="Delete">
+            <a href="{% url 'catalog:user_list' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+
+    {% else %}
+        <p>You do not have permission to access this feature.</p>
+        <a href="{% url 'catalog:user_list' %}" class="btn btn-primary">Back</a>
+    {% endif %}
+{% endblock %}

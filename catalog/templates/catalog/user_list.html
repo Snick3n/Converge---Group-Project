@@ -1,0 +1,90 @@
+{% extends "catalog/base.html" %}
+{% block content %}
+
+    <h1>User List</h1>
+
+    <h2>Admins</h2>
+    {% if admins %}
+        <table class="table table-bordered white-table">
+            {% for admin in admins %}
+                <tr>
+                    <td>{{ admin.username }}</td>
+                    <td>Superuser</td>
+                    <td>
+                        <a href="{% url 'catalog:user_update' pk=admin.pk %}" class="btn btn-primary btn-sm">Edit</a>
+                    </td>
+                    <td>
+                        {% if admin != request.user %}
+                            <a href="{% url 'catalog:user_delete' pk=admin.pk %}"
+                               class="btn btn-danger btn-sm" onclick="return confirm('Delete this user?');">Delete
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Cannot delete yourself</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No admins found.</p>
+    {% endif %}
+
+    <h2>Event Planners</h2>
+    {% if planners %}
+        <table class="table table-bordered white-table">
+            {% for planner in planners %}
+                <tr>
+                    <td>
+                        {% if planner.user %}
+                            {{ planner.user.username }} - {{ planner }}
+                        {% else %}
+                            Unknown User
+                        {% endif %}
+                    </td>
+                    <td>Event Planner</td>
+                    <td>
+                        {% if planner.user %}
+                            <a href="{% url 'catalog:user_update' pk=planner.user.pk %}" class="btn btn-primary btn-sm">
+                                Edit
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if planner.user %}
+                            <a href="{% url 'catalog:user_delete' pk=planner.user.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this user?');">
+                                Delete
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No event planners found.</p>
+    {% endif %}
+
+    <h2>Event Goers</h2>
+    {% if goers %}
+        <table class="table table-bordered white-table">
+            {% for goer in goers %}
+                <tr>
+                    <td>{{ goer.username }}</td>
+                    <td>Event Goer</td>
+
+                    <td>
+                        <a href="{% url 'catalog:user_update' pk=goer.pk %}" class="btn btn-primary btn-sm">
+                            Edit
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'catalog:user_delete' pk=goer.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this user?');">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No event goers found.</p>
+    {% endif %}
+{% endblock %}
