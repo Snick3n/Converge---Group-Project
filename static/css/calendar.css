@@ -31,8 +31,8 @@
 }
 
 body {
-  background: linear-gradient(135deg, #0b1d3a 0%, #eaf3fa 100%);
-  color: #222;
+    background-image: linear-gradient(135deg, #0b1d3a 0%, #677589 100%);
+    color: #222;
   min-height: 100vh;
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -91,4 +91,13 @@ body {
 }
 .form-text.text-muted, [id$='_helptext'] {
     color: orange !important;
+}
+form p {
+    display:flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+form p label {
+    margin-top: 0.2rem;
+    text-align:left;
 }
