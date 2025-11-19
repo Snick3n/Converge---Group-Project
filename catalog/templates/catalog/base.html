@@ -35,9 +35,6 @@
                         <a class="nav-link" href="{% url 'catalog:my_rsvps' %} ">View RSVP List</a>
                     </li>
                 {% endif %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'catalog:index' %} ">Search Events</a>
-                </li>
                 {%  if user.is_authenticated %}
                         <a class="nav-link" href="{% url 'catalog:become_event_planner' %} ">Become an event planner</a>
                 {% endif %}

@@ -48,18 +48,15 @@
                                 </a>
                             </td>
                         {% else %}
-                            <td></td>
-                            <td></td>
+                            <td>You don't have permissions <br> to perform this function.</td>
+                            <td>You don't have permissions <br> to perform this function.</td>
                         {% endif %}
-
                         <td>
                             {% if user.is_authenticated %}
-
                                 {% if event.user_rsvp %}
                                     <span class="text-success">
                                         <strong>You are {{ event.user_rsvp.get_status_display }}</strong>
                                     </span>
-
                                 {% else %}
                                     {% if event.rsvp_count >= event.max_attendees %}
                                         <p><strong>Event full</strong></p>
@@ -70,7 +67,6 @@
                                         </a>
                                     {% endif %}
                                 {% endif %}
-
                             {% else %}
                                 <a href="{% url 'login' %}?next={{ request.path }}">Log in to RSVP</a>
                             {% endif %}
