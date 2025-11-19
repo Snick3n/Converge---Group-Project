@@ -17,4 +17,7 @@ urlpatterns = [
     path('become_event_planner/', views.become_event_planner, name="become_event_planner"),
     path('events/<uuid:event_id>/rsvp/<str:status>/', views.rsvp_event, name='rsvp_event'),
     path('my-rsvps/', views.UserRSVPListView.as_view(), name='my_rsvps'),
+    path("users/", views.UserListView.as_view(), name="user_list"),
+    path("users/<int:pk>/edit/", views.UserUpdateView.as_view(), name="user_update"),
+    path("users/<int:pk>/delete/", views.user_delete, name="user_delete"),
 ]

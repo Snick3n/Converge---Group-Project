@@ -5,14 +5,14 @@ from django.urls import reverse
 from django.utils import timezone
 from .forms import EventBookingForm, EventPlannerForm
 from django.views.generic.edit import UpdateView
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP
 from django.views import View, generic
 from django.db.models import Count
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 
 SLOTS_PER_DAY = 6
@@ -279,14 +279,19 @@ class EventPlannerListView( generic.ListView):
 class EventPlannerDetailView( generic.DetailView):
     model = EventPlanner
 
-class EventPlannerUpdate(UpdateView):
+class EventPlannerUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = EventPlanner
     fields = ['name', 'detail', 'image']
+    template_name = "catalog/eventplanner_form.html"
 
-    def form_valid(self, form):
-        post = form.save(commit=False)
-        post.save()
-        return HttpResponseRedirect(reverse('catalog:eventplanner_list'))
+    def test_func(self):
+        planner = self.get_object()
+        user = self.request.user
+        return user.is_superuser or planner.user == user
+
+    def get_success_url(self):
+        messages.success(self.request, "Event planner updated successfully.")
+        return reverse('catalog:eventplanner_list')
 
 def EventPlannerDelete(request, pk):
     eventplanner = get_object_or_404(EventPlanner, pk=pk)
@@ -479,3 +484,55 @@ class UserRSVPListView(LoginRequiredMixin, generic.ListView):
             .select_related('event')
             .order_by('event__date', 'event__time')
         )
+
+class AdminRequiredMixin(UserPassesTestMixin):
+    def test_func(self):
+        return self.request.user.is_superuser
+
+class UserListView(LoginRequiredMixin, AdminRequiredMixin, generic.TemplateView):
+    template_name = "catalog/user_list.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        admins = User.objects.filter(is_superuser=True).order_by("username")
+        planners = (
+            EventPlanner.objects
+            .select_related("user")
+            .order_by("user__username")
+        )
+        goers = (
+            User.objects
+            .filter(is_superuser=False)
+            .exclude(eventplanner__isnull=False)
+            .order_by("username")
+        )
+        context["admins"] = admins
+        context["planners"] = planners
+        context["goers"] = goers
+        return context
+
+class UserUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
+    model = User
+    template_name = "catalog/user_form.html"
+    fields = ["first_name", "last_name", "email"]
+
+    def get_success_url(self):
+        messages.success(self.request, "User updated successfully.")
+        return reverse("catalog:user_list")
+
+def user_delete(request, pk):
+    user_obj = get_object_or_404(User, pk=pk)
+
+    if user_obj == request.user:
+        messages.error(request, "You cannot delete your own account.")
+        return redirect('catalog:user_list')
+
+    name = user_obj.get_full_name() or user_obj.username
+
+    try:
+        user_obj.delete()
+        messages.success(request, f"{name} has been deleted.")
+    except Exception:
+        messages.error(request, f"{name} could not be deleted.")
+
+    return redirect('catalog:user_list')

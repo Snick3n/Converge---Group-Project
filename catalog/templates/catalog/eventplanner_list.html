@@ -19,6 +19,13 @@
                     <td>
                         <a href="{% url 'catalog:eventplanner_detail' planner.pk %}">{{ planner.name }}</a>
                     </td>
+                    <td>
+                        {% if user.is_superuser or planner.user == user %}
+                            <a href="{% url 'catalog:eventplanner_update' pk=planner.pk %}" class="btn btn-primary">
+                                Edit
+                            </a>
+                        {% endif %}
+                    </td>
 
                     {% if user.is_superuser %}
                         {% if not planner.event_set.exists %}
@@ -32,12 +39,6 @@
                         {% else %}
                             <td>Events Exist - Cannot delete planner</td>
                         {% endif %}
-                        <td>
-                            <a href="{% url 'catalog:eventplanner_update' pk=planner.pk %}"
-                               class="btn btn-primary">
-                                Edit Planner
-                            </a>
-                        </td>
                     {% endif %}
                 </tr>
             {% endfor %}
