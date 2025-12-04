@@ -1,4 +1,4 @@
-from .models import Event,EventPlanner, Genre
+from .models import Event,EventPlanner, Genre, BlockedDate
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -22,3 +22,29 @@ class EventPlannerForm(forms.ModelForm):
     class Meta:
         model = EventPlanner
         fields = ['name', 'detail', 'image']
+class BlockedDateForm(forms.ModelForm):
+    class Meta:
+        model = BlockedDate
+        fields = ['date', 'reason']
+        widgets = {
+            "date": forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            "reason": forms.TextInput(attrs={'class': 'form-control'}),
+        }
+class BulkBlockDatesForm(forms.Form):
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+    end_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+    )
+    reason = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+    def clean(self):
+        cleaned_data = super().clean()
+        start = cleaned_data.get('start_date')
+        end = cleaned_data.get('end_date')
+        if start and end and end < start:
+            raise forms.ValidationError('End date cannot be before start date.')
+        return cleaned_data

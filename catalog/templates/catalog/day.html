@@ -1,6 +1,12 @@
 {% extends "catalog/base.html" %}
 {% block content %}
 <h2 class="h4 mb-3">{{ date|date:"l, F j, Y" }}</h2>
+{% if is_blocked %}
+    <div class="alert alert-warning mb-3">
+    This date has been <strong>Blocked for Booking</strong>. Existing events are still shown,
+    but new bookings are not allowed on this day.
+    </div>
+{% endif %}
 
 <table class="table table-bordered align-middle text-center white-table">
   <thead class="table-light">
@@ -64,7 +70,7 @@
                       </div>
                   {% endfor %}
 
-                  {% if can_book %}
+                  {% if can_book and not is_booked %}
                       {% if c.events %}
                         <a href="{{ c.book_url }}" class="btn btn-outline-primary btn-sm">Book another</a>
                       {% else%}
@@ -85,7 +91,7 @@
                       {% endif %}
                   {% endfor %}
 
-                  {% if can_book %}
+                  {% if can_book and not is_blocked %}
                       {% if c.events %}
                         <a href="{{ c.book_url }}" class="btn btn-outline-primary btn-sm">Book another</a>
                       {% else %}
@@ -93,7 +99,7 @@
                       {% endif %}
                   {% endif %}
               {% else %}
-                  {% if can_book %}
+                  {% if can_book  and not is_blocked%}
                       <a href="{{ c.book_url }}" class="btn btn-primary btn-sm">Book</a>
                   {% else %}
                       <span class="text-muted small">Available</span>

@@ -112,5 +112,14 @@ class RSVP(models.Model):
     def __str__(self):
         return f'{self.user} → {self.event} ({self.get_status_display()})'
 
+class BlockedDate(models.Model):
+    date = models.DateField(unique=True)
+    reason = models.CharField(max_length=200, blank=True, null=True)
 
+    class Meta:
+        ordering = ["date"]
+        verbose_name = "Blocked Date"
+        verbose_name_plural = "Blocked Dates"
+    def __str__(self):
+        return f"{self.date} ({self.reason}"  if self.reason else str(self.date)
 

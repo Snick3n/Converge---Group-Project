@@ -20,4 +20,6 @@ urlpatterns = [
     path("users/", views.UserListView.as_view(), name="user_list"),
     path("users/<int:pk>/edit/", views.UserUpdateView.as_view(), name="user_update"),
     path("users/<int:pk>/delete/", views.user_delete, name="user_delete"),
+    path("manage-dates/", views.manage_dates, name="manage_dates"),
+    path("manage-dates/unblock/<int:pk>", views.unblock_date, name="unblock_date"),
 ]

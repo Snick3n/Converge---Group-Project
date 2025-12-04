@@ -33,8 +33,7 @@
   <section class="col-12 col-lg-4 color-plz">
     <div class="small text-uppercase mb-1">New Events this Month</div>
     <h3 class="h6">{{ current_month.name }} {{ current_month.year }}</h3>
-
-    <table class="table table-bordered text-center align-middle calendar-table calendar-month" role="grid"
+    <table class="table table-bordered text-center align-middle calendar-table calendar-month table1" role="grid"
            aria-label="{{ current_month.name }} {{ current_month.year }} calendar">
       <thead class="table-light">
         <tr>
@@ -45,14 +44,25 @@
         {% for week in current_month.weeks %}
           <tr>
             {% for d in week %}
-              <td class="position-relative {{ d.cls }} {% if not d.in_month %}is-outside{% endif %}">
-                <a class="d-block text-decoration-none py-2 stretched-link" href="{{ d.url }}">
-                  <div class="fw-semibold">{{ d.date.day }}</div>
-                  <small class="text-muted">
-                    {% if d.count %}{{ d.count }} event{% if d.count != 1 %}s{% endif %}{% else %}&mdash;{% endif %}
-                  </small>
-                </a>
-              </td>
+                <td class="position-relative {{ d.cls }}
+                {% if not d.in_month %}is-outside{% endif %}
+                {% if d.blocked %}blocked-day{% endif %}">
+                {% if d.blocked %}
+                    <div class="py-2">
+                    <div class="fw-semibold text-muted">{{ d.date.day }}</div>
+                        <small class="text-danger fw-bold">Blocked</small>
+                    </div>
+                {% else %}
+                    <a class="d-block text-decoration-none py-2 stretched-link" href="{{ d.url }}">
+                        <div class="fw-semibold">{{ d.date.day }}</div>
+                        <small class="text-muted">
+                            {% if d.count %}{{ d.count }} event{% if d.count != 1 %}s{% endif %}
+                            {% else %}&mdash;
+                            {% endif %}
+                        </small>
+                    </a>
+                {% endif %}
+                </td>
             {% endfor %}
           </tr>
         {% endfor %}
@@ -62,10 +72,9 @@
 
   <!-- NEXT MONTH -->
   <section class="col-12 col-lg-4 color-plz">
-    <div class="small text-uppercase mb-1">Next Month's Events</div>
-    <h3 class="h6">{{ next_month.name }} {{ next_month.year }}</h3>
-
-    <table class="table table-bordered text-center align-middle calendar-table calendar-month" role="grid"
+    <div class="small text-uppercase mb-1 table2">Next Month's Events</div>
+    <h3 class="h6 table2">{{ next_month.name }} {{ next_month.year }}</h3>
+    <table class="table table-bordered text-center align-middle calendar-table calendar-month table2" role="grid"
            aria-label="{{ next_month.name }} {{ next_month.year }} calendar">
       <thead class="table-light">
         <tr>
@@ -76,14 +85,25 @@
         {% for week in next_month.weeks %}
           <tr>
             {% for d in week %}
-              <td class="position-relative {{ d.cls }} {% if not d.in_month %}is-outside{% endif %}">
-                <a class="d-block text-decoration-none py-2 stretched-link" href="{{ d.url }}">
-                  <div class="fw-semibold">{{ d.date.day }}</div>
-                  <small class="text-muted">
-                    {% if d.count %}{{ d.count }} event{% if d.count != 1 %}s{% endif %}{% else %}&mdash;{% endif %}
-                  </small>
-                </a>
-              </td>
+                <td class="position-relative {{ d.cls }}
+                {% if not d.in_month %}is-outside{% endif %}
+                {% if d.blocked %}blocked-day{% endif %}">
+                {% if d.blocked %}
+                    <div class="py-2">
+                    <div class="fw-semibold text-muted">{{ d.date.day }}</div>
+                        <small class="text-danger fw-bold">Blocked</small>
+                    </div>
+                {% else %}
+                    <a class="d-block text-decoration-none py-2 stretched-link" href="{{ d.url }}">
+                        <div class="fw-semibold">{{ d.date.day }}</div>
+                        <small class="text-muted">
+                            {% if d.count %}{{ d.count }} event{% if d.count != 1 %}s{% endif %}
+                            {% else %}&mdash;
+                            {% endif %}
+                        </small>
+                    </a>
+                {% endif %}
+                </td>
             {% endfor %}
           </tr>
         {% endfor %}

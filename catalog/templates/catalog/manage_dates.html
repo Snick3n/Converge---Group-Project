@@ -1,0 +1,123 @@
+{% extends "catalog/base.html" %}
+
+{% block title %}Manage Dates{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+  <h1 class="mb-3">Manage Available Dates</h1>
+  <p>
+    Use this page to block specific dates or ranges. Blocked dates cannot be booked.
+  </p>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} mt-2">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="row mt-4">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          Block / Update a Single Date
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ single_form.non_field_errors }}
+
+            <div class="mb-3">
+              <label class="form-label">Date</label>
+              {{ single_form.date }}
+              {{ single_form.date.errors }}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Reason (optional)</label>
+              {{ single_form.reason }}
+              {{ single_form.reason.errors }}
+            </div>
+
+            <button type="submit" name="single-submit" class="btn btn-primary">
+              Save Date
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header">
+          Block a Date Range
+        </div>
+        <div class="card-body">
+          <form method="post">
+            {% csrf_token %}
+            {{ bulk_form.non_field_errors }}
+
+            <div class="mb-3">
+              <label class="form-label">Start date</label>
+              {{ bulk_form.start_date }}
+              {{ bulk_form.start_date.errors }}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">End date</label>
+              {{ bulk_form.end_date }}
+              {{ bulk_form.end_date.errors }}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Reason for this range (optional)</label>
+              {{ bulk_form.reason }}
+              {{ bulk_form.reason.errors }}
+            </div>
+
+            <button type="submit" name="bulk-submit" class="btn btn-warning">
+              Block Range
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-4" />
+
+  <h2 class="mb-3">Currently Blocked Dates (Upcoming)</h2>
+  {% if blocked_dates %}
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Reason</th>
+            <th style="width: 120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in blocked_dates %}
+            <tr>
+              <td>{{ d.date }}</td>
+              <td>{{ d.reason|default:"—" }}</td>
+              <td>
+                <a href="{% url 'catalog:unblock_date' d.pk %}"
+                   class="btn btn-sm btn-outline-danger">
+                  Unblock
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p>No upcoming blocked dates.</p>
+  {% endif %}
+
+  <a href="{% url 'catalog:index' %}" class="btn back-btn">
+    Back to Calendar
+  </a>
+</div>
+{% endblock %}

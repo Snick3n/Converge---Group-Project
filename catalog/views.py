@@ -1,13 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 import calendar
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from django.urls import reverse
 from django.utils import timezone
-from .forms import EventBookingForm, EventPlannerForm
+from .forms import EventBookingForm, EventPlannerForm, BlockedDateForm, BulkBlockDatesForm
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group, User
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
-from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP
+from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP, BlockedDate
 from django.views import View, generic
 from django.db.models import Count
 from django.contrib.auth.decorators import user_passes_test, login_required
@@ -18,7 +18,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 SLOTS_PER_DAY = 6
 
 # Create your views here.
-
+def staff_required(view_func):
+    return user_passes_test(lambda u: u.is_staff)(view_func)
 def _month_grid(year: int, month: int, capacity_aware: bool = True):
 
     cal = calendar.Calendar(firstweekday=6)
@@ -41,6 +42,11 @@ def _month_grid(year: int, month: int, capacity_aware: bool = True):
     )
 
     by_day = {row['date']: row['count'] for row in counts_qs}
+    blocked = set(
+        BlockedDate.objects
+        .filter(date__range=(visible_days_start, visible_days_end))
+        .values_list('date', flat=True)
+    )
 
     rooms_total = Room.objects.filter(status='a').count() or 1
     slots_total = rooms_total * 6
@@ -66,6 +72,7 @@ def _month_grid(year: int, month: int, capacity_aware: bool = True):
                 "date": d,
                 "in_month": (d.month == month),
                 "count": count,
+                "blocked": d in blocked,
                 "cls": load_class(count),
                 "url": reverse("catalog:calendar-day", args=[d.year, d.month, d.day]),
             })
@@ -118,6 +125,7 @@ class DayView(View):
     def get(self, request, year, month, day):
         d = date(int(year), int(month), int(day))
         rooms = list(Room.objects.order_by('name'))
+        is_blocked = BlockedDate.objects.filter(date=d).exists()
 
         events = (
             Event.objects
@@ -163,6 +171,8 @@ class DayView(View):
                 or request.user.groups.filter(name="EventPlanner").exists()
             )
         )
+        if is_blocked:
+            can_book = False
 
         return render(
             request,
@@ -172,6 +182,7 @@ class DayView(View):
                 "rooms": rooms,
                 "rows": rows,
                 "can_book": can_book,
+                "is_blocked": is_blocked,
             }
         )
 
@@ -209,6 +220,9 @@ def book_event(request):
     room = get_object_or_404(Room, id=room_id)
     event_date = datetime.strptime(date_str, "%Y-%m-%d").date()
     start_time = datetime.strptime(time_str, "%H:%M").time()
+    if BlockedDate.objects.filter(date=event_date).exists():
+        messages.error(request, "This date is unavailable for booking.")
+        return redirect("catalog:index")
 
     if request.method == "POST":
         form = EventBookingForm(request.POST)
@@ -537,3 +551,64 @@ def user_delete(request, pk):
         messages.error(request, f"{name} could not be deleted.")
 
     return redirect('catalog:user_list')
+@login_required
+@staff_required
+def manage_dates(request):
+    single_form = BlockedDateForm(prefix="single")
+    bulk_form = BulkBlockDatesForm(prefix="bulk")
+
+    if request.method == "POST":
+        if "single-submit" in request.POST:
+            single_form = BlockedDateForm(request.POST, prefix="single")
+            if single_form.is_valid():
+                obj, created = BlockedDate.objects.update_or_create(
+                    date=single_form.cleaned_data["date"],
+                    defaults={"reason": single_form.cleaned_data.get("reason", "")},
+                )
+                if created:
+                    messages.success(request, f"{obj.date} has been blocked.")
+                else:
+                    messages.success(request, f"{obj.date} has been updated.")
+                return redirect("catalog:manage_dates")
+
+        elif "bulk-submit" in request.POST:
+            bulk_form = BulkBlockDatesForm(request.POST, prefix="bulk")
+            if bulk_form.is_valid():
+                start = bulk_form.cleaned_data["start_date"]
+                end = bulk_form.cleaned_data["end_date"]
+                reason = bulk_form.cleaned_data.get("reason", "")
+
+                current = start
+                created_count = 0
+                while current <= end:
+                    _, created = BlockedDate.objects.get_or_create(
+                        date=current,
+                        defaults={"reason": reason},
+                    )
+                    if created:
+                        created_count += 1
+                    current += timedelta(days=1)
+
+                messages.success(
+                    request,
+                    f"Blocked {created_count} date(s) from {start} to {end}."
+                )
+                return redirect("catalog:manage_dates")
+
+    today = date.today()
+    blocked_dates = BlockedDate.objects.filter(date__gte=today).order_by("date")
+
+    context = {
+        "single_form": single_form,
+        "bulk_form": bulk_form,
+        "blocked_dates": blocked_dates,
+    }
+    return render(request, "catalog/manage_dates.html", context)
+
+@login_required
+@staff_required
+def unblock_date(request, pk):
+    blocked = get_object_or_404(BlockedDate, pk=pk)
+    blocked.delete()
+    messages.success(request, f"You have unblocked {blocked.date}.")
+    return redirect("catalog:manage_dates")
