@@ -276,6 +276,7 @@ def book_event(request):
 
 class EventPlannerListView( generic.ListView):
     model = EventPlanner
+
 class EventPlannerDetailView( generic.DetailView):
     model = EventPlanner
 
