@@ -1,0 +1,73 @@
+{% extends "catalog/base.html" %}
+{% block content %}
+<div class="container my-4">
+
+  <h1 class="h4 mb-3">Manage Rooms</h1>
+
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <p class=" mb-0">Create, edit, or update room availability.</p>
+    <a href="{% url 'catalog:room_create' %}" class="btn btn-primary btn-sm">+ New Room</a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle white-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Capacity</th>
+          <th>Status</th>
+          <th style="width: 260px;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for room in rooms %}
+        <tr>
+          <td>{{ room.name }}</td>
+          <td>{{ room.capacity }}</td>
+
+          <td>
+            {% if room.status == "a" %}
+              <span class="badge bg-success">Available</span>
+            {% elif room.status == "r" %}
+              <span class="badge bg-warning text-dark">Reserved</span>
+            {% else %}
+              <span class="badge bg-secondary">Unavailable</span>
+            {% endif %}
+          </td>
+
+          <td>
+            <a href="{% url 'catalog:room_edit' room.pk %}" class="btn btn-sm btn-outline-primary">
+              Edit
+            </a>
+
+            <div class="btn-group ms-1">
+              <a href="{% url 'catalog:room_set_status' room.pk 'a' %}"
+                 class="btn btn-sm btn-success {% if room.status == 'a' %}disabled{% endif %}">
+                Available
+              </a>
+              <a href="{% url 'catalog:room_set_status' room.pk 'r' %}"
+                 class="btn btn-sm btn-warning text-dark {% if room.status == 'r' %}disabled{% endif %}">
+                Reserved
+              </a>
+              <a href="{% url 'catalog:room_set_status' room.pk 'u' %}"
+                 class="btn btn-sm btn-secondary {% if room.status == 'u' %}disabled{% endif %}">
+                Unavailable
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <a href="{% url 'catalog:index' %}" class="btn back-btn btn-outline-secondary mt-3">
+    Back to Calendar
+  </a>
+
+</div>
+{% endblock %}

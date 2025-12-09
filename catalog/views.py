@@ -3,7 +3,7 @@ import calendar
 from datetime import date, datetime, timedelta
 from django.urls import reverse
 from django.utils import timezone
-from .forms import EventBookingForm, EventPlannerForm, BlockedDateForm, BulkBlockDatesForm, EventNotificationForm
+from .forms import EventBookingForm, EventPlannerForm, BlockedDateForm, BulkBlockDatesForm, EventNotificationForm,RoomForm
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group, User
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
@@ -729,3 +729,60 @@ def send_event_notification_now(request, event_id):
     )
 
     return redirect('catalog:my_rsvps')
+
+
+@login_required
+@staff_required
+def manage_rooms(request):
+    rooms = Room.objects.order_by("name", "capacity")
+    return render(request, "catalog/manage_rooms.html", {"rooms": rooms})
+
+@login_required
+@staff_required
+def room_create(request):
+    if request.method == "POST":
+        form = RoomForm(request.POST)
+        if form.is_valid():
+            room = form.save()
+            messages.success(request, f"Room '{room.name}' created.")
+            return redirect("catalog:manage_rooms")
+    else:
+        form = RoomForm()
+
+    return render(request, "catalog/room_form.html", {"form": form, "mode": "create"})
+@login_required
+@staff_required
+def room_edit(request, pk):
+    room = get_object_or_404(Room, pk=pk)
+
+    if request.method == "POST":
+        form = RoomForm(request.POST, instance=room)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Room '{room.name}' updated.")
+            return redirect("catalog:manage_rooms")
+    else:
+        form = RoomForm(instance=room)
+
+    return render(request, "catalog/room_form.html", {
+        "form": form,
+        "mode": "edit",
+        "room": room
+    })
+
+@login_required
+@staff_required
+def room_set_status(request, pk, status):
+    room = get_object_or_404(Room, pk=pk)
+
+    valid_statuses = {"a", "r", "u"}
+    if status not in valid_statuses:
+        messages.error(request, "Invalid room status.")
+        return redirect("catalog:manage_rooms")
+
+    room.status = status
+    room.save()
+
+    status_label = dict(Room.available_status)[status]
+    messages.success(request, f"Room '{room.name}' set to {status_label}.")
+    return redirect("catalog:manage_rooms")

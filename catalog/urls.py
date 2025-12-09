@@ -24,4 +24,10 @@ urlpatterns = [
     path("manage-dates/unblock/<int:pk>", views.unblock_date, name="unblock_date"),
     path('events/<uuid:event_id>/notify/', views.create_event_notification, name='event_notification_create'),
     path('events/<uuid:event_id>/notify/send-now/', views.send_event_notification_now, name='event_notification_send_now'),
+    path("manage-rooms/", views.manage_rooms, name="manage_rooms"),
+    path("manage-rooms/new/", views.room_create, name="room_create"),
+    path("manage-rooms/<uuid:pk>/edit/", views.room_edit, name="room_edit"),
+    path("manage-rooms/<uuid:pk>/set-status/<str:status>/",
+         views.room_set_status, name="room_set_status"),
+
 ]

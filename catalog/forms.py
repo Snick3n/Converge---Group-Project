@@ -1,7 +1,6 @@
-from .models import Event,EventPlanner, Genre, BlockedDate, EventNotification
+from .models import Event, EventPlanner, Genre, BlockedDate, EventNotification, Room
 from django import forms
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
+
 
 class EventBookingForm(forms.Form):
     name = forms.CharField(label="Event name", max_length=255)
@@ -63,3 +62,13 @@ class EventNotificationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['scheduled_for'].input_formats = ['%Y-%m-%dT%H:%M']
+
+class RoomForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        fields = ["name", "capacity", "status"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "capacity": forms.NumberInput(attrs={"class": "form-control", "min": 1, "max": 100}),
+            "status": forms.Select(attrs={"class": "form-select"}),
+        }

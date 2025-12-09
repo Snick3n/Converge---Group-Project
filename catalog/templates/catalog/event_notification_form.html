@@ -20,10 +20,10 @@
         Scheduled Date & Time
       </label>
       {{ form.scheduled_for }}
-      <div class="form-text">Use your local date & time.</div>
+      <div>Use your local date & time.</div>
     </div>
 
     <button type="submit" class="btn btn-primary">Schedule Email</button>
-    <a href="{% url 'catalog:event_detail' event.id %}" class="btn btn-secondary">Cancel</a>
+    <a href="{% url 'catalog:event_detail' event.id %}" class="btn back-btn btn-secondary">Cancel</a>
   </form>
 {% endblock %}

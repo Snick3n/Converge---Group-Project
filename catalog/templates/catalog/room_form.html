@@ -1,0 +1,51 @@
+{% extends "catalog/base.html" %}
+{% block content %}
+<div class="container my-4">
+
+  <h1 class="h4 mb-3">
+    {% if mode == "edit" %}
+      Edit Room{% if room %}: {{ room.name }}{% endif %}
+    {% else %}
+      Create New Room
+    {% endif %}
+  </h1>
+
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+  {% endfor %}
+
+  <form method="post" class="card shadow-sm">
+    {% csrf_token %}
+    <div class="card-body">
+
+      {{ form.non_field_errors }}
+
+      <div class="mb-3">
+        <label class="form-label">Room Name</label>
+        {{ form.name }}
+        {{ form.name.errors }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Capacity</label>
+        {{ form.capacity }}
+        {{ form.capacity.errors }}
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Status</label>
+        {{ form.status }}
+        {{ form.status.errors }}
+      </div>
+    </div>
+
+    <div class="card-footer d-flex justify-content-between">
+      <a href="{% url 'catalog:manage_rooms' %}" class="btn btn-outline-secondary">Cancel</a>
+      <button class="btn btn-primary" type="submit">
+        {% if mode == "edit" %}Save Changes{% else %}Create Room{% endif %}
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

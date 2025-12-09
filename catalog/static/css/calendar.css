@@ -118,3 +118,11 @@ form p label {
 .table2 {
     margin-left: 50px;
 }
+.day-table .room-unavailable {
+    background-color: #e9ecef !important;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+.day-table .room-unavailable a {
+    pointer-events: none;
+}
