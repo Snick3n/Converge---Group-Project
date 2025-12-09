@@ -13,9 +13,9 @@
     {% endif %}
 
     {% if eventplanner_list %}
-        <table class="table table-bordered">
+        <table class="table borderless">
             {% for planner in eventplanner_list %}
-                <tr class="table-secondary">
+                <tr class="table borderless">
                     <td>
                         <a href="{% url 'catalog:eventplanner_detail' planner.pk %}">{{ planner.name }}</a>
                     </td>

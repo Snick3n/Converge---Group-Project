@@ -22,4 +22,6 @@ urlpatterns = [
     path("users/<int:pk>/delete/", views.user_delete, name="user_delete"),
     path("manage-dates/", views.manage_dates, name="manage_dates"),
     path("manage-dates/unblock/<int:pk>", views.unblock_date, name="unblock_date"),
+    path('events/<uuid:event_id>/notify/', views.create_event_notification, name='event_notification_create'),
+    path('events/<uuid:event_id>/notify/send-now/', views.send_event_notification_now, name='event_notification_send_now'),
 ]

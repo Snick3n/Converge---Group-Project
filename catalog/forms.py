@@ -1,4 +1,4 @@
-from .models import Event,EventPlanner, Genre, BlockedDate
+from .models import Event,EventPlanner, Genre, BlockedDate, EventNotification
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
@@ -48,3 +48,18 @@ class BulkBlockDatesForm(forms.Form):
         if start and end and end < start:
             raise forms.ValidationError('End date cannot be before start date.')
         return cleaned_data
+
+class EventNotificationForm(forms.ModelForm):
+    class Meta:
+        model = EventNotification
+        fields = ['subject', 'body', 'scheduled_for']
+        widgets = {
+            'scheduled_for': forms.DateTimeInput(
+                attrs={'type': 'datetime-local'},
+                format='%Y-%m-%dT%H:%M'
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['scheduled_for'].input_formats = ['%Y-%m-%dT%H:%M']

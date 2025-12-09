@@ -20,6 +20,14 @@
 
 <p><strong>Genre:</strong> {{ event.genre.all|join:", " }}</p>
 
+{% if user.is_authenticated and event.planner.user == user %}
+  <p>
+    <a href="{% url 'catalog:event_notification_create' event.id %}" class="btn btn-info">
+      Schedule notification email
+    </a>
+  </p>
+{% endif %}
+
 {% if user.is_authenticated %}
     <p>
         <strong>Your RSVP:</strong>

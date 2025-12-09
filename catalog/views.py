@@ -3,16 +3,19 @@ import calendar
 from datetime import date, datetime, timedelta
 from django.urls import reverse
 from django.utils import timezone
-from .forms import EventBookingForm, EventPlannerForm, BlockedDateForm, BulkBlockDatesForm
+from .forms import EventBookingForm, EventPlannerForm, BlockedDateForm, BulkBlockDatesForm, EventNotificationForm
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group, User
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
-from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP, BlockedDate
+from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP, BlockedDate, EventNotification
 from django.views import View, generic
 from django.db.models import Count
 from django.contrib.auth.decorators import user_passes_test, login_required
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.mail import send_mail
+from django.conf import settings
+
 
 
 SLOTS_PER_DAY = 6
@@ -500,6 +503,28 @@ class UserRSVPListView(LoginRequiredMixin, generic.ListView):
             .order_by('event__date', 'event__time')
         )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        # Try to find an EventPlanner profile for this user
+        try:
+            planner = EventPlanner.objects.get(user=user)
+        except EventPlanner.DoesNotExist:
+            planner = None
+
+        if planner:
+            planned_events = (
+                Event.objects
+                .filter(planner=planner)  # or .filter(planner__user=user)
+                .order_by('date', 'time')
+            )
+        else:
+            planned_events = Event.objects.none()
+
+        context['planned_events'] = planned_events
+        return context
+
 class AdminRequiredMixin(UserPassesTestMixin):
     def test_func(self):
         return self.request.user.is_superuser
@@ -612,3 +637,95 @@ def unblock_date(request, pk):
     blocked.delete()
     messages.success(request, f"You have unblocked {blocked.date}.")
     return redirect("catalog:manage_dates")
+
+@login_required
+def create_event_notification(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+
+    # Ensure the logged-in user is the planner for this event
+    try:
+        planner = EventPlanner.objects.get(user=request.user)
+    except EventPlanner.DoesNotExist:
+        messages.error(request, "You must be an event planner to create notifications.")
+        return redirect('catalog:event_detail', pk=event.id)
+
+    if event.planner != planner:
+        messages.error(request, "You are not the planner for this event.")
+        return redirect('catalog:event_detail', pk=event.id)
+
+    if request.method == 'POST':
+        form = EventNotificationForm(request.POST)
+        if form.is_valid():
+            notification = form.save(commit=False)
+            notification.event = event
+            notification.planner = planner
+            if notification.scheduled_for <= timezone.now():
+                messages.error(request, "Scheduled time must be in the future.")
+            else:
+                notification.save()
+                messages.success(request, "Notification scheduled successfully.")
+                return redirect('catalog:event_detail', pk=event.id)
+    else:
+        form = EventNotificationForm()
+
+    return render(
+        request,
+        'catalog/event_notification_form.html',
+        {'form': form, 'event': event}
+    )
+
+@login_required
+def send_event_notification_now(request, event_id):
+    event = get_object_or_404(Event, id=event_id)
+
+    try:
+        planner = EventPlanner.objects.get(user=request.user)
+    except EventPlanner.DoesNotExist:
+        messages.error(request, "You must be an event planner to send notifications.")
+        return redirect('catalog:my_rsvps')
+
+    if event.planner != planner:
+        messages.error(request, "You are not the planner for this event.")
+        return redirect('catalog:my_rsvps')
+
+    notification = (
+        EventNotification.objects
+        .filter(event=event, sent=False)
+        .order_by('scheduled_for')
+        .first()
+    )
+
+    if not notification:
+        messages.error(request, "There is no pending notification to send for this event.")
+        return redirect('catalog:my_rsvps')
+
+    # Get all attendees (RSVP 'y')
+    rsvps = RSVP.objects.filter(event=event, status='y').select_related('user')
+    recipients = [r.user.email for r in rsvps if r.user and r.user.email]
+
+    if not recipients:
+        messages.error(request, "No attendees with email addresses to send to.")
+        # Mark as sent anyway if you don't want it to keep showing as pending
+        # notification.sent = True
+        # notification.save()
+        return redirect('catalog:my_rsvps')
+
+    # Send the email
+    send_mail(
+        subject=notification.subject,
+        message=notification.body,
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=recipients,
+        fail_silently=False,
+    )
+
+    notification.sent = True
+    notification.scheduled_for = timezone.now()
+    notification.save()
+
+    messages.success(
+        request,
+        f"Notification email sent to {len(recipients)} attendee(s) for '{event.name}'."
+    )
+
+    return redirect('catalog:my_rsvps')

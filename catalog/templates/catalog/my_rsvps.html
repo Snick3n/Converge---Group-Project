@@ -1,6 +1,46 @@
 {% extends "catalog/base.html" %}
 
 {% block content %}
+  <h2>Your Event RSVPs</h2>
+  {% if planned_events %}
+    <ul>
+      {% for event in planned_events %}
+        <li>
+            <table class='table-borderless'>
+                <tr>
+                    <td>
+                        <a href="{% url 'catalog:event_detail' event.id %}">
+                        {{ event.name }}
+                        </a>
+                        <br>
+                        <span>
+                        {{ event.date|date:"M d, Y" }} at {{ event.time|time:"H:i" }}
+                        </span>
+                        <br>
+                        <span>
+                        RSVPs: {{ event.rsvp_count }} / {{ event.max_attendees }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <a href='{% url 'catalog:event_notification_create' event.id %}' class="btn btn-info btn-sm mt-2">Create RSVP email
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{% url 'catalog:event_notification_send_now' event.id %}" class="btn btn-warning btn-sm mt-2">Send RSVP email now
+                        </a>
+                    </td>
+                </tr>
+            </table>
+        </li>
+        <hr>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>You haven't planned any events yet.</p>
+  {% endif %}
+
   <h1>My RSVPs</h1>
 
   {% if rsvps %}

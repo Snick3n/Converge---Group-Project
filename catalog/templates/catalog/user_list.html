@@ -5,9 +5,9 @@
 
     <h2>Admins</h2>
     {% if admins %}
-        <table class="table table-bordered white-table">
+        <table class="table-borderless">
             {% for admin in admins %}
-                <tr>
+                <tr class="table-borderless">
                     <td>{{ admin.username }}</td>
                     <td>Superuser</td>
                     <td>
@@ -31,9 +31,9 @@
 
     <h2>Event Planners</h2>
     {% if planners %}
-        <table class="table table-bordered white-table">
+        <table class="table borderless">
             {% for planner in planners %}
-                <tr>
+                <tr class="table borderless">
                     <td>
                         {% if planner.user %}
                             {{ planner.user.username }} - {{ planner }}
@@ -65,9 +65,9 @@
 
     <h2>Event Goers</h2>
     {% if goers %}
-        <table class="table table-bordered white-table">
+        <table class="table borderless">
             {% for goer in goers %}
-                <tr>
+                <tr class="table borderless">
                     <td>{{ goer.username }}</td>
                     <td>Event Goer</td>
 

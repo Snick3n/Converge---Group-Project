@@ -4,9 +4,9 @@
 <h1>Event List</h1>
 
 {% if event_list %}
-    <table class="table table-bordered white-table">
+    <table class="table borderless">
         <thead>
-            <tr class="table-secondary">
+            <tr class="table borderless">
                 <th>Event</th>
                 <th>Planner</th>
                 <th>Edit</th>
@@ -48,8 +48,8 @@
                                 </a>
                             </td>
                         {% else %}
-                            <td>You don't have permissions <br> to perform this function.</td>
-                            <td>You don't have permissions <br> to perform this function.</td>
+                            <td></td>
+                            <td></td>
                         {% endif %}
                         <td>
                             {% if user.is_authenticated %}
