@@ -101,3 +101,28 @@ form p label {
     margin-top: 0.2rem;
     text-align:left;
 }
+.calendar-month td.blocked-day {
+    background-color: #ffe0e0 !important;
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+.calendar-month td.blocked-day .fw-semibold {
+    text-decoration: line-through;
+}
+.calendar-month td.blocked-day small {
+    color: #b30000 !important;
+}
+.table1 {
+    margin-right: 50px;
+}
+.table2 {
+    margin-left: 50px;
+}
+.day-table .room-unavailable {
+    background-color: #e9ecef !important;
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+.day-table .room-unavailable a {
+    pointer-events: none;
+}

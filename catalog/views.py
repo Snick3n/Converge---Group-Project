@@ -160,6 +160,7 @@ class DayView(View):
                     "booked": bool(evs),
                     "has_approved": has_approved,
                     "book_url": book_url,
+                    "is_room_available": (r.status == 'a'),
                 })
 
             rows.append({
