@@ -2,7 +2,19 @@
 
 {% block content %}
 <h1>Event List</h1>
-
+    <form class="d-flex align-items-center gap-2 my-3" method="GET" action="{% url 'catalog:event_list' %}">
+    <div class="input-group shadow-sm">
+        <input
+            type="search"
+            name="q"
+            class="form-control"
+            placeholder="Search events..."
+            aria-label="Search events"
+            value="{{ request.GET.q }}"
+        >
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+    </form>
 {% if event_list %}
     <table class="table borderless">
         <thead>

@@ -2,7 +2,18 @@
 
 {% block content %}
     <h1>Event Planners</h1>
-
+    <form class="d-flex align-items-center gap-2 my-3" method="GET" action="{% url 'catalog:eventplanner_list' %}">
+    <div class="input-group shadow-sm">
+        <input
+            type="search"
+            name="q"
+            class="form-control"
+            placeholder="Search event planners..."
+            aria-label="Search event planners"
+        >
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+    </form>
     {% if messages %}
         {% for message in messages %}
             <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -46,4 +57,5 @@
     {% else %}
         <p>There are no event planners.</p>
     {% endif %}
+    <a href="{% url 'catalog:index' %}" class="btn back-btn">Back</a>
 {% endblock %}

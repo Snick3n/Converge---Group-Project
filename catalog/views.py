@@ -7,7 +7,7 @@ from .forms import EventBookingForm, EventPlannerForm, BlockedDateForm, BulkBloc
 from django.views.generic.edit import UpdateView
 from django.contrib.auth.models import Group, User
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
-from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP, BlockedDate, EventNotification
+from .models import Event, EventPlanner, Room, VALID_HOURS, RSVP, BlockedDate, EventNotification, Q
 from django.views import View, generic
 from django.db.models import Count
 from django.contrib.auth.decorators import user_passes_test, login_required
@@ -15,7 +15,6 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.mail import send_mail
 from django.conf import settings
-
 
 
 SLOTS_PER_DAY = 6
@@ -290,9 +289,22 @@ def book_event(request):
         },
     )
 
-
 class EventPlannerListView( generic.ListView):
     model = EventPlanner
+    template_name = "catalog/eventplanner_list.html"
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("user")
+        query = self.request.GET.get("q", "")
+
+        if query:
+            qs = qs.filter(
+                Q(name__icontains=query) |
+                Q(user__first_name__icontains=query) |
+                Q(user__last_name__icontains=query)
+            )
+
+        return qs
 
 class EventPlannerDetailView( generic.DetailView):
     model = EventPlanner
@@ -319,20 +331,28 @@ def EventPlannerDelete(request, pk):
     except:
         messages.error(request, (eventplanner.name + " cannot be deleted. Events exist for this planner."))
     return redirect('catalog:eventplanner_list')
+
 class EventListView( generic.ListView):
     model = Event
     template_name = "catalog/event_list.html"
+
     def get_queryset(self):
         qs = super().get_queryset().select_related("planner")
         user = self.request.user
+        query = self.request.GET.get("q", "")
+
+        if query:
+            qs = qs.filter(name__icontains=query)
+
         for e in qs:
-            is_owner = bool(e.planner and getattr(e.planner, 'user', None) == user)
-            can_manage= user.is_superuser or is_owner
-            show_event = e.approved or can_manage
+            is_owner = e.planner and e.planner.user == user
+            can_manage = user.is_superuser or is_owner
             e.is_owner = is_owner
             e.can_manage = can_manage
-            e.show_event = show_event
+            e.show_event = e.approved or can_manage
+
         return qs
+
 class EventDetailView( generic.DetailView):
     model = Event
 
@@ -534,21 +554,35 @@ class UserListView(LoginRequiredMixin, AdminRequiredMixin, generic.TemplateView)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        admins = User.objects.filter(is_superuser=True).order_by("username")
-        planners = (
-            EventPlanner.objects
-            .select_related("user")
-            .order_by("user__username")
-        )
-        goers = (
-            User.objects
-            .filter(is_superuser=False)
-            .exclude(eventplanner__isnull=False)
-            .order_by("username")
-        )
-        context["admins"] = admins
-        context["planners"] = planners
-        context["goers"] = goers
+        query = self.request.GET.get("q", "").strip()
+        admins_qs = User.objects.filter(is_superuser=True)
+        planners_qs = EventPlanner.objects.select_related("user")
+        goers_qs = User.objects.filter(is_superuser=False).exclude(eventplanner__isnull=False)
+
+        if query:
+            admins_qs = admins_qs.filter(
+                Q(username__icontains=query) |
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query)
+            )
+
+            planners_qs = planners_qs.filter(
+                Q(user__username__icontains=query) |
+                Q(user__first_name__icontains=query) |
+                Q(user__last_name__icontains=query)
+            )
+
+            goers_qs = goers_qs.filter(
+                Q(username__icontains=query) |
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query)
+            )
+
+        context["admins"] = admins_qs.order_by("username")
+        context["planners"] = planners_qs.order_by("user__username")
+        context["goers"] = goers_qs.order_by("username")
+        context["query"] = query
+
         return context
 
 class UserUpdateView(LoginRequiredMixin, AdminRequiredMixin, UpdateView):
@@ -710,14 +744,14 @@ def send_event_notification_now(request, event_id):
         # notification.save()
         return redirect('catalog:my_rsvps')
 
-    # Send the email
+        # Send the email
     send_mail(
         subject=notification.subject,
         message=notification.body,
         from_email=settings.EMAIL_HOST_USER,
         recipient_list=recipients,
         fail_silently=False,
-    )
+        )
 
     notification.sent = True
     notification.scheduled_for = timezone.now()
@@ -726,10 +760,9 @@ def send_event_notification_now(request, event_id):
     messages.success(
         request,
         f"Notification email sent to {len(recipients)} attendee(s) for '{event.name}'."
-    )
+        )
 
     return redirect('catalog:my_rsvps')
-
 
 @login_required
 @staff_required
@@ -750,6 +783,7 @@ def room_create(request):
         form = RoomForm()
 
     return render(request, "catalog/room_form.html", {"form": form, "mode": "create"})
+
 @login_required
 @staff_required
 def room_edit(request, pk):

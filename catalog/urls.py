@@ -29,5 +29,4 @@ urlpatterns = [
     path("manage-rooms/<uuid:pk>/edit/", views.room_edit, name="room_edit"),
     path("manage-rooms/<uuid:pk>/set-status/<str:status>/",
          views.room_set_status, name="room_set_status"),
-
 ]

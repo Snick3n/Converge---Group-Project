@@ -2,6 +2,18 @@
 {% block content %}
 
     <h1>User List</h1>
+    <form class="d-flex align-items-center gap-2 my-3" method="GET" action="{% url 'catalog:user_list' %}">
+    <div class="input-group shadow-sm">
+        <input
+            type="search"
+            name="q"
+            class="form-control"
+            placeholder="Search User..."
+            aria-label="Search Users"
+        >
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+    </form>
 
     <h2>Admins</h2>
     {% if admins %}
