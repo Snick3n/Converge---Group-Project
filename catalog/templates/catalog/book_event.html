@@ -1,12 +1,14 @@
 {% extends "catalog/base.html" %}
 {% block title %}Book Event{% endblock %}
 {% block content %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
 <div class="container mt-4">
   <h2>Book Room: {{ room.name }} on {{ date|date:"F j, Y" }} at {{ time|time:"g:i A" }}</h2>
   <hr>
   <form method="POST">
     {% csrf_token %}
-    {{ form.as_p }}
+    {{ form|crispy }}
     <button type="submit" class="btn btn-success">Save Event</button>
     <a href="{% url 'catalog:calendar-day' year=date.year month=date.month day=date.day %}" class="btn btn-secondary">Cancel</a>
   </form>
