@@ -740,9 +740,6 @@ def send_event_notification_now(request, event_id):
 
     if not recipients:
         messages.error(request, "No attendees with email addresses to send to.")
-        # Mark as sent anyway if you don't want it to keep showing as pending
-        # notification.sent = True
-        # notification.save()
         return redirect('catalog:my_rsvps')
 
         # Send the email

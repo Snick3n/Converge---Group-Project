@@ -25,6 +25,8 @@
     <a href="{% url 'catalog:event_notification_create' event.id %}" class="btn btn-info">
       Schedule notification email
     </a>
+    <a href="{% url 'catalog:event_notification_send_now' event.id %}" class="btn btn-warning">Send RSVP email now
+    </a>
   </p>
 {% endif %}
 
